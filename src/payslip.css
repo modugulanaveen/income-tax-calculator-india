@@ -429,11 +429,13 @@
   border-top: 1px solid rgba(15, 23, 42, 0.03);
   padding-top: 10px;
   padding-left: 8px;
+  display: grid;
+  gap: 6px;
 }
-/* Tight grid for meta rows so values sit close to the colons */
+/* Tight grid for meta rows with right-aligned values */
 .payslip .summary-right .meta-row {
   display: grid;
-  grid-template-columns: auto 10px minmax(24px, max-content);
+  grid-template-columns: minmax(0, 1fr) 10px minmax(24px, 80px);
   gap: 6px;
   align-items: center;
   font-weight: 700;
@@ -447,6 +449,9 @@
   text-align: left;
   padding-right: 4px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 .payslip .summary-right .meta-row .meta-colon {
   color: var(--text-light);
@@ -457,6 +462,7 @@
   font-weight: 900;
   min-width: 24px;
   text-align: right;
+  justify-self: end;
 }
 
 /* Earnings/Deductions table */
