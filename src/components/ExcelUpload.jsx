@@ -1196,12 +1196,13 @@ export default function ExcelUpload({ employees = [], setEmployees, company }) {
       "UAN Number",
       "Employee ID",
       "Employee Name",
+      "Designation",
       "Pay Period",
       "Pay Date",
       "Paid Days",
       "LOP Days",
       "Basic Pay",
-      "HRA",
+      "House Rent Allowance",
       "Special Allowance",
       "Gross Earnings",
       "Income Tax",
@@ -1215,6 +1216,7 @@ export default function ExcelUpload({ employees = [], setEmployees, company }) {
       "101411733970",
       "G20",
       "John Doe",
+      "Software Engineer",
       "Jan-26",
       "31-01-2026",
       "22",
@@ -1275,12 +1277,13 @@ export default function ExcelUpload({ employees = [], setEmployees, company }) {
       "UAN Number",
       "Employee ID",
       "Employee Name",
+      "Designation",
       "Pay Period",
       "Pay Date",
       "Paid Days",
       "LOP Days",
       "Basic Pay",
-      "HRA",
+      "House Rent Allowance",
       "Special Allowance",
       "Gross Earnings",
       "Income Tax",
@@ -1295,12 +1298,13 @@ export default function ExcelUpload({ employees = [], setEmployees, company }) {
         "UAN Number": "101411733970",
         "Employee ID": "G20",
         "Employee Name": "John Doe",
+        Designation: "Software Engineer",
         "Pay Period": "Jan-26",
         "Pay Date": "31-01-2026",
         "Paid Days": 22,
         "LOP Days": 0,
         "Basic Pay": 50000,
-        HRA: 20000,
+        "House Rent Allowance": 20000,
         "Special Allowance": 3000,
         "Gross Earnings": 73000,
         "Income Tax": 5000,
@@ -1313,12 +1317,13 @@ export default function ExcelUpload({ employees = [], setEmployees, company }) {
         "UAN Number": "",
         "Employee ID": "EMP001",
         "Employee Name": "Jane Smith",
+        Designation: "Associate",
         "Pay Period": "Feb-26",
         "Pay Date": "28-02-2026",
         "Paid Days": 22,
         "LOP Days": 0,
         "Basic Pay": 50000,
-        HRA: 20000,
+        "House Rent Allowance": 20000,
         "Special Allowance": 0,
         "Gross Earnings": 70000,
         "Income Tax": 4000,
@@ -1355,7 +1360,7 @@ export default function ExcelUpload({ employees = [], setEmployees, company }) {
 
     // Set column widths
     const colWidths = [
-      15, 15, 18, 12, 12, 12, 12, 12, 12, 18, 15, 12, 15, 15, 12, 15,
+      15, 15, 18, 16, 12, 12, 12, 12, 12, 12, 18, 15, 12, 15, 15, 12, 15,
     ];
     worksheet.columns = worksheet.columns.map((col, idx) => ({
       width: colWidths[idx] || 12,
@@ -1402,6 +1407,9 @@ export default function ExcelUpload({ employees = [], setEmployees, company }) {
     ]);
     instructionsSheet.addRow(["- Basic Pay: Base salary amount"]);
     instructionsSheet.addRow(["- HRA: House Rent Allowance"]);
+    instructionsSheet.addRow([
+      "- Designation: Employee job title / designation",
+    ]);
     instructionsSheet.addRow([
       "- Special Allowance: Any additional allowances",
     ]);

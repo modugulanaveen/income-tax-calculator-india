@@ -42,9 +42,12 @@ export default function SalaryCalculator() {
 
     // PF Wage Ceiling: ₹15,000/month
     const monthlyPfWage = Math.min(monthlyBasic, PF_CONSTANTS.WAGE_CEILING);
-    const monthlyEmployeePf = Math.round(monthlyPfWage * PF_CONSTANTS.EPF_RATE_EMPLOYEE);
+    const monthlyEmployeePf = Math.round(
+      monthlyPfWage * PF_CONSTANTS.EPF_RATE_EMPLOYEE,
+    );
     const annualEmployeePf = monthlyEmployeePf * 12;
-    const annualEmployerPfContribution = Math.round(monthlyPfWage * PF_CONSTANTS.EPF_RATE_EMPLOYER) * 12;
+    const annualEmployerPfContribution =
+      Math.round(monthlyPfWage * PF_CONSTANTS.EPF_RATE_EMPLOYER) * 12;
 
     // Gross salary is computed as CTC minus employer PF contribution
     const annualGross = Math.max(annualCtc - annualEmployerPfContribution, 0);
@@ -54,11 +57,11 @@ export default function SalaryCalculator() {
 
     const employerEps = Math.min(
       Math.round(monthlyPfWage * PF_CONSTANTS.EPS_RATE_EMPLOYER),
-      PF_CONSTANTS.EPS_CAP
+      PF_CONSTANTS.EPS_CAP,
     );
     const employerEpf = Math.max(
       0,
-      Math.round(monthlyPfWage * PF_CONSTANTS.EPF_RATE_EMPLOYER) - employerEps
+      Math.round(monthlyPfWage * PF_CONSTANTS.EPF_RATE_EMPLOYER) - employerEps,
     );
 
     const calculateIncomeTax = (taxableIncome) => {
@@ -69,13 +72,13 @@ export default function SalaryCalculator() {
       let tax = 0;
       let remaining = taxableIncome;
       const slabs = [
-        { limit: 400000, rate: 0 },      // Up to ₹4,00,000: 0%
-        { limit: 400000, rate: 0.05 },   // ₹4,00,001 to ₹8,00,000: 5%
-        { limit: 400000, rate: 0.1 },    // ₹8,00,001 to ₹12,00,000: 10%
-        { limit: 400000, rate: 0.15 },   // ₹12,00,001 to ₹16,00,000: 15%
-        { limit: 400000, rate: 0.2 },    // ₹16,00,001 to ₹20,00,000: 20%
-        { limit: 400000, rate: 0.25 },   // ₹20,00,001 to ₹24,00,000: 25%
-        { limit: Infinity, rate: 0.3 },  // Above ₹24,00,000: 30%
+        { limit: 400000, rate: 0 }, // Up to ₹4,00,000: 0%
+        { limit: 400000, rate: 0.05 }, // ₹4,00,001 to ₹8,00,000: 5%
+        { limit: 400000, rate: 0.1 }, // ₹8,00,001 to ₹12,00,000: 10%
+        { limit: 400000, rate: 0.15 }, // ₹12,00,001 to ₹16,00,000: 15%
+        { limit: 400000, rate: 0.2 }, // ₹16,00,001 to ₹20,00,000: 20%
+        { limit: 400000, rate: 0.25 }, // ₹20,00,001 to ₹24,00,000: 25%
+        { limit: Infinity, rate: 0.3 }, // Above ₹24,00,000: 30%
       ];
 
       for (const slab of slabs) {
@@ -85,17 +88,34 @@ export default function SalaryCalculator() {
         if (remaining <= 0) break;
       }
 
-      return tax + tax * 0.04;
+      return tax;
     };
 
     const standardDeduction = 75000;
     const annualTaxableIncome = Math.max(annualGross - standardDeduction, 0);
-    const annualIncomeTax = calculateIncomeTax(annualTaxableIncome);
+    const annualIncomeTaxBeforeRelief = calculateIncomeTax(annualTaxableIncome);
+    const marginalReliefThreshold = 1200000;
+    let annualTaxAfterRelief = annualIncomeTaxBeforeRelief;
+    let annualMarginalRelief = 0;
+
+    if (annualTaxableIncome > marginalReliefThreshold) {
+      const excessIncome = annualTaxableIncome - marginalReliefThreshold;
+      if (annualIncomeTaxBeforeRelief > excessIncome) {
+        annualTaxAfterRelief = excessIncome;
+        annualMarginalRelief =
+          annualIncomeTaxBeforeRelief - annualTaxAfterRelief;
+      }
+    }
+
+    const annualHealthEducationCess = annualTaxAfterRelief * 0.04;
+    const annualIncomeTax = Math.ceil(
+      annualTaxAfterRelief + annualHealthEducationCess,
+    );
     const incomeTax = annualIncomeTax / 12;
     const pt = monthlyGross < 15000 ? 0 : monthlyGross <= 20000 ? 150 : 200;
     const annualPt = pt * 12;
     const totalDeductions = monthlyEmployeePf + pt + incomeTax;
-    const annualTotalDeductions = totalDeductions * 12;
+    const annualTotalDeductions = annualEmployeePf + annualPt + annualIncomeTax;
     const netSalary = monthlyGross - totalDeductions;
     const annualNetSalary = netSalary * 12;
 
@@ -146,14 +166,31 @@ export default function SalaryCalculator() {
           <h2 style={{ margin: 0, fontSize: 24, lineHeight: 1.2 }}>
             Salary Calculator
           </h2>
-          <p style={{ margin: "10px 0 0", color: "#2563eb", fontSize: 14, fontWeight: 700 }}>
-            Enter your CTC here and quickly view basic, HRA, PF, tax, and net pay.
+          <p
+            style={{
+              margin: "10px 0 0",
+              color: "#2563eb",
+              fontSize: 14,
+              fontWeight: 700,
+            }}
+          >
+            Enter your CTC here and quickly view basic, HRA, PF, tax, and net
+            pay.
           </p>
-          <p style={{ margin: "10px 0 0", color: "#dc2626", fontSize: 12, fontWeight: 700 }}>
+          <p
+            style={{
+              margin: "10px 0 0",
+              color: "#dc2626",
+              fontSize: 12,
+              fontWeight: 700,
+            }}
+          >
             Note: Employer PF does not appear in payslip.
           </p>
           <p style={{ margin: "6px 0 0", color: "#64748b", fontSize: 12 }}>
-            Income tax (TDS u/s 192) on annual taxable income after ₹75,000 standard deduction. Rebate u/s 87A applies if taxable ≤ ₹12L. Includes 4% cess.
+            Income tax (TDS u/s 192) on annual taxable income after ₹75,000
+            standard deduction. Rebate u/s 87A applies if taxable ≤ ₹12L, and
+            marginal relief is applied above ₹12L.
           </p>
         </div>
 
@@ -192,12 +229,52 @@ export default function SalaryCalculator() {
       </div>
 
       <div style={{ overflowX: "auto", marginTop: 16 }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 780, background: "#ffffff" }}>
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            minWidth: 780,
+            background: "#ffffff",
+          }}
+        >
           <thead>
             <tr style={{ background: "#fef3c7" }}>
-              <th style={{ textAlign: "left", padding: "14px 16px", border: "1px solid #e2e8f0", color: "#92400e", fontSize: 14, fontWeight: 700 }}>Component</th>
-              <th style={{ textAlign: "right", padding: "14px 16px", border: "1px solid #e2e8f0", color: "#92400e", fontSize: 14, fontWeight: 700 }}>Per month</th>
-              <th style={{ textAlign: "right", padding: "14px 16px", border: "1px solid #e2e8f0", color: "#92400e", fontSize: 14, fontWeight: 700 }}>Per annum</th>
+              <th
+                style={{
+                  textAlign: "left",
+                  padding: "14px 16px",
+                  border: "1px solid #e2e8f0",
+                  color: "#92400e",
+                  fontSize: 14,
+                  fontWeight: 700,
+                }}
+              >
+                Component
+              </th>
+              <th
+                style={{
+                  textAlign: "right",
+                  padding: "14px 16px",
+                  border: "1px solid #e2e8f0",
+                  color: "#92400e",
+                  fontSize: 14,
+                  fontWeight: 700,
+                }}
+              >
+                Per month
+              </th>
+              <th
+                style={{
+                  textAlign: "right",
+                  padding: "14px 16px",
+                  border: "1px solid #e2e8f0",
+                  color: "#92400e",
+                  fontSize: 14,
+                  fontWeight: 700,
+                }}
+              >
+                Per annum
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -207,47 +284,240 @@ export default function SalaryCalculator() {
               ["Special Allowances", monthlySpecial, monthlySpecial * 12],
               ["Gross Salary", monthlyGross, annualGross],
             ].map(([label, monthValue, yearValue], index) => (
-              <tr key={label} style={{ background: index % 2 === 0 ? "#f8fafc" : "#ffffff" }}>
-                <td style={{ padding: "12px 16px", border: "1px solid #e2e8f0", color: "#0f172a" }}>{label}</td>
-                <td style={{ padding: "12px 16px", border: "1px solid #e2e8f0", textAlign: "right", color: "#0f172a", fontWeight: 700 }}>{formatRupee(monthValue)}</td>
-                <td style={{ padding: "12px 16px", border: "1px solid #e2e8f0", textAlign: "right", color: "#0f172a", fontWeight: 700 }}>{formatRupee(yearValue)}</td>
+              <tr
+                key={label}
+                style={{ background: index % 2 === 0 ? "#f8fafc" : "#ffffff" }}
+              >
+                <td
+                  style={{
+                    padding: "12px 16px",
+                    border: "1px solid #e2e8f0",
+                    color: "#0f172a",
+                  }}
+                >
+                  {label}
+                </td>
+                <td
+                  style={{
+                    padding: "12px 16px",
+                    border: "1px solid #e2e8f0",
+                    textAlign: "right",
+                    color: "#0f172a",
+                    fontWeight: 700,
+                  }}
+                >
+                  {formatRupee(monthValue)}
+                </td>
+                <td
+                  style={{
+                    padding: "12px 16px",
+                    border: "1px solid #e2e8f0",
+                    textAlign: "right",
+                    color: "#0f172a",
+                    fontWeight: 700,
+                  }}
+                >
+                  {formatRupee(yearValue)}
+                </td>
               </tr>
             ))}
             <tr>
-              <td colSpan={3} style={{ padding: "14px 16px", background: "#d1fae5", color: "#065f46", fontSize: 12, fontWeight: 800, textTransform: "uppercase", border: "1px solid #e2e8f0" }}>
+              <td
+                colSpan={3}
+                style={{
+                  padding: "14px 16px",
+                  background: "#d1fae5",
+                  color: "#065f46",
+                  fontSize: 12,
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  border: "1px solid #e2e8f0",
+                }}
+              >
                 Statutory Deductions
               </td>
             </tr>
             {[
-              ["PF contribution by employee (12%)", employeePf, annualEmployeePf],
+              [
+                "PF contribution by employee (12%)",
+                employeePf,
+                annualEmployeePf,
+              ],
               ["Professional Tax (PT)", pt, annualPt],
               ["Income Tax", incomeTax, annualIncomeTax],
             ].map(([label, monthValue, yearValue], index) => (
-              <tr key={label} style={{ background: index % 2 === 0 ? "#ffffff" : "#f8fafc" }}>
-                <td style={{ padding: "12px 16px", border: "1px solid #e2e8f0", color: "#0f172a" }}>{label}</td>
-                <td style={{ padding: "12px 16px", border: "1px solid #e2e8f0", textAlign: "right", color: "#0f172a", fontWeight: 700 }}>{formatRupee(monthValue)}</td>
-                <td style={{ padding: "12px 16px", border: "1px solid #e2e8f0", textAlign: "right", color: "#0f172a", fontWeight: 700 }}>{formatRupee(yearValue)}</td>
+              <tr
+                key={label}
+                style={{ background: index % 2 === 0 ? "#ffffff" : "#f8fafc" }}
+              >
+                <td
+                  style={{
+                    padding: "12px 16px",
+                    border: "1px solid #e2e8f0",
+                    color: "#0f172a",
+                  }}
+                >
+                  {label}
+                </td>
+                <td
+                  style={{
+                    padding: "12px 16px",
+                    border: "1px solid #e2e8f0",
+                    textAlign: "right",
+                    color: "#0f172a",
+                    fontWeight: 700,
+                  }}
+                >
+                  {formatRupee(monthValue)}
+                </td>
+                <td
+                  style={{
+                    padding: "12px 16px",
+                    border: "1px solid #e2e8f0",
+                    textAlign: "right",
+                    color: "#0f172a",
+                    fontWeight: 700,
+                  }}
+                >
+                  {formatRupee(yearValue)}
+                </td>
               </tr>
             ))}
             <tr style={{ background: "#fef3c7" }}>
-              <td style={{ padding: "14px 16px", border: "1px solid #e2e8f0", color: "#92400e", fontWeight: 800 }}>Total deductions (PF+PT)</td>
-              <td style={{ padding: "14px 16px", border: "1px solid #e2e8f0", textAlign: "right", color: "#92400e", fontWeight: 800 }}>{formatRupee(totalDeductions)}</td>
-              <td style={{ padding: "14px 16px", border: "1px solid #e2e8f0", textAlign: "right", color: "#92400e", fontWeight: 800 }}>{formatRupee(annualTotalDeductions)}</td>
+              <td
+                style={{
+                  padding: "14px 16px",
+                  border: "1px solid #e2e8f0",
+                  color: "#92400e",
+                  fontWeight: 800,
+                }}
+              >
+                Total deductions (PF+PT+Income Tax)
+              </td>
+              <td
+                style={{
+                  padding: "14px 16px",
+                  border: "1px solid #e2e8f0",
+                  textAlign: "right",
+                  color: "#92400e",
+                  fontWeight: 800,
+                }}
+              >
+                {formatRupee(totalDeductions)}
+              </td>
+              <td
+                style={{
+                  padding: "14px 16px",
+                  border: "1px solid #e2e8f0",
+                  textAlign: "right",
+                  color: "#92400e",
+                  fontWeight: 800,
+                }}
+              >
+                {formatRupee(annualTotalDeductions)}
+              </td>
             </tr>
             <tr style={{ background: "#ecfdf5" }}>
-              <td style={{ padding: "14px 16px", border: "1px solid #e2e8f0", color: "#0f5132", fontWeight: 800 }}>Net Salary (Gross - Total deductions)</td>
-              <td style={{ padding: "14px 16px", border: "1px solid #e2e8f0", textAlign: "right", color: "#0f5132", fontWeight: 800 }}>{formatRupee(netSalary)}</td>
-              <td style={{ padding: "14px 16px", border: "1px solid #e2e8f0", textAlign: "right", color: "#0f5132", fontWeight: 800 }}>{formatRupee(annualNetSalary)}</td>
+              <td
+                style={{
+                  padding: "14px 16px",
+                  border: "1px solid #e2e8f0",
+                  color: "#0f5132",
+                  fontWeight: 800,
+                }}
+              >
+                Net Salary (Gross - Total deductions)
+              </td>
+              <td
+                style={{
+                  padding: "14px 16px",
+                  border: "1px solid #e2e8f0",
+                  textAlign: "right",
+                  color: "#0f5132",
+                  fontWeight: 800,
+                }}
+              >
+                {formatRupee(netSalary)}
+              </td>
+              <td
+                style={{
+                  padding: "14px 16px",
+                  border: "1px solid #e2e8f0",
+                  textAlign: "right",
+                  color: "#0f5132",
+                  fontWeight: 800,
+                }}
+              >
+                {formatRupee(annualNetSalary)}
+              </td>
             </tr>
             <tr style={{ background: "#fef2f2" }}>
-              <td style={{ padding: "14px 16px", border: "1px solid #e2e8f0", color: "#991b1b", fontWeight: 700 }}>Employer PF contribution (12%)</td>
-              <td style={{ padding: "14px 16px", border: "1px solid #e2e8f0", textAlign: "right", color: "#991b1b", fontWeight: 700 }}>{formatRupee(annualEmployerPf / 12)}</td>
-              <td style={{ padding: "14px 16px", border: "1px solid #e2e8f0", textAlign: "right", color: "#991b1b", fontWeight: 700 }}>{formatRupee(annualEmployerPf)}</td>
+              <td
+                style={{
+                  padding: "14px 16px",
+                  border: "1px solid #e2e8f0",
+                  color: "#991b1b",
+                  fontWeight: 700,
+                }}
+              >
+                Employer PF contribution (12%)
+              </td>
+              <td
+                style={{
+                  padding: "14px 16px",
+                  border: "1px solid #e2e8f0",
+                  textAlign: "right",
+                  color: "#991b1b",
+                  fontWeight: 700,
+                }}
+              >
+                {formatRupee(annualEmployerPf / 12)}
+              </td>
+              <td
+                style={{
+                  padding: "14px 16px",
+                  border: "1px solid #e2e8f0",
+                  textAlign: "right",
+                  color: "#991b1b",
+                  fontWeight: 700,
+                }}
+              >
+                {formatRupee(annualEmployerPf)}
+              </td>
             </tr>
             <tr style={{ background: "#e0f2fe" }}>
-              <td style={{ padding: "14px 16px", border: "1px solid #e2e8f0", color: "#0c4a6e", fontWeight: 800 }}>CTC = Gross salary + (Employer PF)</td>
-              <td style={{ padding: "14px 16px", border: "1px solid #e2e8f0", textAlign: "right", color: "#0c4a6e", fontWeight: 800 }}>{formatRupee(monthlyGross + (annualEmployerPf / 12))}</td>
-              <td style={{ padding: "14px 16px", border: "1px solid #e2e8f0", textAlign: "right", color: "#0c4a6e", fontWeight: 800 }}>{formatRupee(annualGross + annualEmployerPf)}</td>
+              <td
+                style={{
+                  padding: "14px 16px",
+                  border: "1px solid #e2e8f0",
+                  color: "#0c4a6e",
+                  fontWeight: 800,
+                }}
+              >
+                CTC = Gross salary + (Employer PF)
+              </td>
+              <td
+                style={{
+                  padding: "14px 16px",
+                  border: "1px solid #e2e8f0",
+                  textAlign: "right",
+                  color: "#0c4a6e",
+                  fontWeight: 800,
+                }}
+              >
+                {formatRupee(monthlyGross + annualEmployerPf / 12)}
+              </td>
+              <td
+                style={{
+                  padding: "14px 16px",
+                  border: "1px solid #e2e8f0",
+                  textAlign: "right",
+                  color: "#0c4a6e",
+                  fontWeight: 800,
+                }}
+              >
+                {formatRupee(annualGross + annualEmployerPf)}
+              </td>
             </tr>
           </tbody>
         </table>

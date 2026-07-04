@@ -148,6 +148,14 @@ export default function PayslipPreview({
   pdfOrientation = "portrait",
   pdfScale = 3,
 }) {
+  // Helper to normalize/display earning/deduction labels
+  const displayLabel = (label) => {
+    if (!label && label !== 0) return "";
+    const str = String(label).trim();
+    if (/^hra$/i.test(str) || /house\s*rent/i.test(str))
+      return "House Rent Allowance";
+    return label;
+  };
   // decide the list of items to render. Prefer explicit `employee` when provided, otherwise render `employees` array
   const items = employee
     ? [
@@ -479,37 +487,50 @@ export default function PayslipPreview({
               role="region"
               aria-labelledby={`payslip-${i}`}
             >
-              <div className="payslip-header">
-                <div className="brand-left">
-                  {headerCompany?.logoDataUrl ? (
+              <div className="payslip-header payslip-header-grid">
+                {headerCompany?.logoDataUrl ? (
+                  <div className="header-logo" aria-hidden="true">
                     <img
                       src={headerCompany.logoDataUrl}
-                      alt="logo"
+                      alt="company logo"
                       className="logo-square"
                     />
-                  ) : null}
+                  </div>
+                ) : (
+                  <div className="header-logo" />
+                )}
 
-                  <div className="company-info">
-                    <div className="company-name">
-                      {headerCompany?.companyName ||
-                        headerCompany?.name ||
-                        "Company Name"}
-                    </div>
-                    <div className="company-address">
-                      {[
-                        headerCompany?.address,
-                        headerCompany?.cityPincode || headerCompany?.city,
-                        headerCompany?.country,
-                      ]
-                        .filter(Boolean)
-                        .join(", ")}
-                    </div>
+                <div className="header-center">
+                  <div className="company-name single-line">
+                    {headerCompany?.companyName ||
+                      headerCompany?.name ||
+                      "Company Name"}
+                  </div>
+                  <div className="company-address">
+                    {[
+                      headerCompany?.address,
+                      headerCompany?.cityPincode || headerCompany?.city,
+                      headerCompany?.country,
+                    ]
+                      .filter(Boolean)
+                      .join(", ")}
                   </div>
                 </div>
 
-                <div className="month-block">
-                  <div className="month-label">Payslip For the Month</div>
-                  <div className="month">{monthDisplay}</div>
+                <div className="header-right">
+                  <div className="month-block small-align">
+                    <div className="month-label">Payslip For the Month</div>
+                    <div className="month month-strong">{monthDisplay}</div>
+                  </div>
+                  {headerCompany?.logoSecondaryUrl ? (
+                    <div className="brand-right no-print">
+                      <img
+                        src={headerCompany.logoSecondaryUrl}
+                        alt="secondary logo"
+                        className="logo-square-right"
+                      />
+                    </div>
+                  ) : null}
                 </div>
               </div>
 
@@ -561,6 +582,12 @@ export default function PayslipPreview({
                       )}
                     </div>
                   </div>
+                  <div className="summary-item">
+                    <div className="label">Designation</div>
+                    <div className="value">
+                      {e.designation || e.jobTitle || "-"}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="summary-right">
@@ -606,11 +633,11 @@ export default function PayslipPreview({
                     const ded = filteredDeductions[idx];
                     return (
                       <div className="ed-row" key={idx}>
-                        <div>{earn ? earn.label : ""}</div>
+                        <div>{earn ? displayLabel(earn.label) : ""}</div>
                         <div className="ed-amt">
                           {earn ? renderAmount(earn.amount) : ""}
                         </div>
-                        <div>{ded ? ded.label : ""}</div>
+                        <div>{ded ? displayLabel(ded.label) : ""}</div>
                         <div className="ed-amt">
                           {ded ? renderAmount(ded.amount) : ""}
                         </div>
@@ -645,7 +672,10 @@ export default function PayslipPreview({
               </div>
 
               <div className="amount-words">
-                Amount In Words : {numberToWords(e.net ?? normalized.net)}
+                <span className="amount-words-label">Amount In Words:</span>
+                <span className="amount-words-value">
+                  {numberToWords(e.net ?? normalized.net)}
+                </span>
               </div>
 
               <div className="footer-note">
