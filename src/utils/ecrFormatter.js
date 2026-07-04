@@ -1,4 +1,3 @@
-
 import { PF_CONSTANTS } from "../constants/pfConstants";
 
 /**
@@ -10,6 +9,7 @@ export function formatToECRLine(pfRecord) {
   const {
     uan = "",
     name = "",
+    gross = 0,
     grossWages = 0,
     epfWages = 0,
     epsWages = 0,
@@ -20,10 +20,12 @@ export function formatToECRLine(pfRecord) {
     ncpDays = 0,
   } = pfRecord;
 
+  const grossSalary = gross || grossWages;
+
   return [
     uan.toString().trim(),
     name.toString().trim().toUpperCase(),
-    formatECRNumber(grossWages),
+    formatECRNumber(grossSalary),
     formatECRNumber(epfWages),
     formatECRNumber(epsWages),
     formatECRNumber(edliWages),
@@ -46,8 +48,8 @@ export function generateECRFileContent(pfDataArray) {
   }
 
   // Generate lines in EPFO format (no headers, no comments)
-  const lines = pfDataArray.map(record => formatToECRLine(record));
-  
+  const lines = pfDataArray.map((record) => formatToECRLine(record));
+
   // Join with newline and ensure proper line ending
   return lines.join("\n") + "\n";
 }
@@ -58,14 +60,25 @@ export function generateECRFileContent(pfDataArray) {
  */
 export function generateECRFilename(establishmentCode, month, year) {
   const monthNames = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
   ];
-  
+
   const monthIndex = month - 1;
-  const monthName = monthIndex >= 0 && monthIndex < 12 ? monthNames[monthIndex] : monthNames[0];
+  const monthName =
+    monthIndex >= 0 && monthIndex < 12 ? monthNames[monthIndex] : monthNames[0];
   const shortYear = year.toString().slice(-2);
-  
+
   return `${establishmentCode}_ECR_${monthName}${shortYear}.txt`;
 }
 
@@ -73,8 +86,9 @@ export function generateECRFilename(establishmentCode, month, year) {
  * Parse EPFO ECR line (10-field format)
  */
 export function parseECRLine(ecrLine) {
-  const parts = ecrLine.split(PF_CONSTANTS.ECR_SEPARATOR);
-  
+  const normalizedLine = ecrLine.trim().replace(/^\s*#~#/, "");
+  const parts = normalizedLine.split(PF_CONSTANTS.ECR_SEPARATOR);
+
   if (parts.length < 10) {
     console.warn("EPFO ECR line has less than 10 fields:", ecrLine);
     // Try to parse what we can
@@ -92,10 +106,10 @@ export function parseECRLine(ecrLine) {
       edli: 0,
       adminCharge: 0,
       edliAdminCharge: 0,
-      refundAdvances: 0
+      refundAdvances: 0,
     };
   }
-  
+
   return {
     uan: parts[0].trim(),
     name: parts[1].trim(),
@@ -110,7 +124,7 @@ export function parseECRLine(ecrLine) {
     edli: 0,
     adminCharge: 0,
     edliAdminCharge: 0,
-    refundAdvances: 0
+    refundAdvances: 0,
   };
 }
 
@@ -128,13 +142,17 @@ export function formatECRNumber(value) {
 export function parseECRContent(ecrContent) {
   const records = [];
   const lines = ecrContent.split("\n");
-  
+
   for (let line of lines) {
     line = line.trim();
-    
-    // Skip empty lines and comment lines
-    if (!line || line.startsWith("#")) continue;
-    
+
+    // Skip empty lines and comment lines, but do not skip valid ECR data starting with #~#
+    if (
+      !line ||
+      (line.startsWith("#") && !line.startsWith(PF_CONSTANTS.ECR_SEPARATOR))
+    )
+      continue;
+
     try {
       const record = parseECRLine(line);
       record.id = `${record.uan}_${Date.now()}_${Math.random()}`;
@@ -143,7 +161,7 @@ export function parseECRContent(ecrContent) {
       console.warn("Failed to parse ECR line:", line, error);
     }
   }
-  
+
   return records;
 }
 
@@ -171,8 +189,23 @@ export function generateDetailedECRContent(pfDataArray, companyInfo = {}) {
   }
 
   // Add header
-  const headers = ["Sl.No", "UAN", "Name", "Gross Wages", "EPF Wages", "EPS Wages", "EDLI Wages", 
-                   "EPF EE", "EPS", "EPF ER", "EDLI", "Admin Charge", "EDLI Admin", "NCP Days", "Refund Advances"];
+  const headers = [
+    "Sl.No",
+    "UAN",
+    "Name",
+    "Gross Wages",
+    "EPF Wages",
+    "EPS Wages",
+    "EDLI Wages",
+    "EPF EE",
+    "EPS",
+    "EPF ER",
+    "EDLI",
+    "Admin Charge",
+    "EDLI Admin",
+    "NCP Days",
+    "Refund Advances",
+  ];
   lines.push("# " + headers.join(" | "));
   lines.push("# " + "=".repeat(80));
   lines.push("");
@@ -186,14 +219,15 @@ export function generateDetailedECRContent(pfDataArray, companyInfo = {}) {
       edli: record.edli || 0,
       adminCharge: record.adminCharge || 0,
       edliAdminCharge: record.edliAdminCharge || 0,
-      refundAdvances: record.refundAdvances || 0
+      refundAdvances: record.refundAdvances || 0,
     };
-    
+
+    const detailedGross = detailedRecord.gross || detailedRecord.grossWages;
     // For detailed view, we need to reconstruct the full line
     const detailedLine = [
       detailedRecord.uan,
       detailedRecord.name.toUpperCase(),
-      formatECRNumber(detailedRecord.grossWages),
+      formatECRNumber(detailedGross),
       formatECRNumber(detailedRecord.epfWages),
       formatECRNumber(detailedRecord.epsWages),
       formatECRNumber(detailedRecord.edliWages),
@@ -206,7 +240,7 @@ export function generateDetailedECRContent(pfDataArray, companyInfo = {}) {
       formatECRNumber(detailedRecord.ncpDays),
       formatECRNumber(detailedRecord.refundAdvances),
     ].join(PF_CONSTANTS.ECR_SEPARATOR);
-    
+
     lines.push(detailedLine);
   });
 
@@ -223,7 +257,11 @@ export function parseCSVContent(csvContent) {
 
   // Find where actual data starts (skip company headers)
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].includes("Sl.No") || lines[i].includes("Sl No") || lines[i].includes("UAN")) {
+    if (
+      lines[i].includes("Sl.No") ||
+      lines[i].includes("Sl No") ||
+      lines[i].includes("UAN")
+    ) {
       dataStartIndex = i + 1;
       break;
     }
@@ -234,7 +272,9 @@ export function parseCSVContent(csvContent) {
     const line = lines[i].trim();
     if (!line) continue;
 
-    const cells = line.split(",").map((cell) => cell.replace(/^"|"$/g, "").trim());
+    const cells = line
+      .split(",")
+      .map((cell) => cell.replace(/^"|"$/g, "").trim());
 
     if (cells.length >= 12) {
       records.push({
@@ -269,7 +309,7 @@ export function parseCSVContent(csvContent) {
         edli: 0,
         adminCharge: 0,
         edliAdminCharge: 0,
-        refundAdvances: 0
+        refundAdvances: 0,
       });
     }
   }
@@ -299,8 +339,23 @@ export function generateCSVContent(pfDataArray, companyInfo = {}) {
   }
 
   // Add header row
-  const headers = ["Sl.No", "UAN", "Name", "Gross Wages", "EPF Wages", "EPS Wages", "EDLI Wages", 
-                   "EPF EE", "EPS", "EPF ER", "EDLI", "Admin Charge", "EDLI Admin", "NCP Days", "Refund Advances"];
+  const headers = [
+    "Sl.No",
+    "UAN",
+    "Name",
+    "Gross Wages",
+    "EPF Wages",
+    "EPS Wages",
+    "EDLI Wages",
+    "EPF EE",
+    "EPS",
+    "EPF ER",
+    "EDLI",
+    "Admin Charge",
+    "EDLI Admin",
+    "NCP Days",
+    "Refund Advances",
+  ];
   lines.push(headers.join(","));
 
   // Add data rows

@@ -1,13 +1,21 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
-  Upload, Download, Plus, Trash2, Calculator,
-  Eye, Settings, Percent, FileText, Table, AlertCircle
-} from 'lucide-react';
-import ExcelJS from 'exceljs';
-import { usePFData } from '../hooks/usePFData';
-import { calculatePF } from '../utils/pfCalculator';
-import Toast from './Toast';
+  Upload,
+  Download,
+  Plus,
+  Trash2,
+  Calculator,
+  Eye,
+  Settings,
+  Percent,
+  FileText,
+  Table,
+  AlertCircle,
+} from "lucide-react";
+import ExcelJS from "exceljs";
+import { usePFData } from "../hooks/usePFData";
+import { calculatePF } from "../utils/pfCalculator";
+import Toast from "./Toast";
 import {
   formatToECRLine,
   generateECRFileContent,
@@ -15,12 +23,21 @@ import {
   generateECRFilename,
   parseECRContent,
   parseCSVContent,
-} from '../utils/ecrFormatter';
-import '../styles/epf-ecr.css';
+  parseECRLine,
+} from "../utils/ecrFormatter";
+import "../styles/epf-ecr.css";
 
 export default function EPFECRGenerator({ company = {}, employees = [] }) {
-  const { pfData, errors, success, setErrors, setSuccess, setPFData, getTotals } = usePFData();
-  const [activeTab, setActiveTab] = useState('calculator');
+  const {
+    pfData,
+    errors,
+    success,
+    setErrors,
+    setSuccess,
+    setPFData,
+    getTotals,
+  } = usePFData();
+  const [activeTab, setActiveTab] = useState("calculator");
   const [showDetailed, setShowDetailed] = useState(false);
   const [toast, setToast] = useState(null);
 
@@ -32,35 +49,36 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
         // Calculate PF wages: Basic + DA only (as per EPFO rules)
         let basicWage = 0;
         let daWage = 0;
-        
+
         if (emp.earnings && Array.isArray(emp.earnings)) {
-          emp.earnings.forEach(earning => {
-            const label = earning.label ? earning.label.toLowerCase() : '';
-            if (label.includes('basic') || label.includes('salary')) {
+          emp.earnings.forEach((earning) => {
+            const label = earning.label ? earning.label.toLowerCase() : "";
+            if (label.includes("basic") || label.includes("salary")) {
               basicWage += earning.amount || 0;
             }
-            if (label.includes('dearness') || label.includes('da')) {
+            if (label.includes("dearness") || label.includes("da")) {
               daWage += earning.amount || 0;
             }
           });
         }
-        
+
         // If no basic wage found, use 0 and let user enter it manually
         const pfWageAmount = basicWage + daWage;
         const gross = emp.gross || 0;
         const pfCalc = calculatePF(pfWageAmount || gross);
-        
+
         return {
+          ...pfCalc,
           id: emp.id || `EMP-${Date.now()}-${Math.random()}`,
           uan: emp.uan || "",
           name: emp.name || "",
+          gross: gross,
           grossWages: gross,
           epfWages: pfWageAmount || gross,
           epsWages: pfWageAmount || gross,
           edliWages: pfWageAmount || gross,
           ncpDays: emp.lossOfPayDays || 0,
           refundAdvances: 0,
-          ...pfCalc
         };
       });
       setPFData(pfRecords);
@@ -68,38 +86,39 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
   }, [employees, setPFData]);
 
   // Calculator states
-  const [calcBasic, setCalcBasic] = useState('');
-  const [calcDA, setCalcDA] = useState('');
-  const [calcNcp, setCalcNcp] = useState('0');
+  const [calcBasic, setCalcBasic] = useState("");
+  const [calcDA, setCalcDA] = useState("");
+  const [calcNcp, setCalcNcp] = useState("0");
   const [calcResult, setCalcResult] = useState(null);
 
   // Form states
   const [formData, setFormData] = useState({
-    uan: '',
-    name: '',
-    grossWages: '',
-    epfWages: '',
-    epsWages: '',
-    edliWages: '',
-    epfEe: '',
-    eps: '',
-    epfEr: '',
-    edli: '',
-    adminCharge: '',
-    edliAdminCharge: '',
-    ncpDays: '0',
-    refundAdvances: '0'
+    uan: "",
+    name: "",
+    grossWages: "",
+    epfWages: "",
+    epsWages: "",
+    edliWages: "",
+    epfEe: "",
+    eps: "",
+    epfEr: "",
+    edli: "",
+    adminCharge: "",
+    edliAdminCharge: "",
+    ncpDays: "0",
+    refundAdvances: "0",
   });
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [ecrLine, setEcrLine] = useState("");
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
-  const [estCode, setEstCode] = useState('');
+  const [estCode, setEstCode] = useState("");
 
   // ========== CALCULATOR HANDLERS ==========
   const handleCalculate = () => {
     if (!calcBasic || !calcDA) {
-      setErrors(['Please enter both Basic and DA wages']);
+      setErrors(["Please enter both Basic and DA wages"]);
       return;
     }
 
@@ -114,7 +133,7 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
 
   const handleApplyCalculation = () => {
     if (!calcResult || !formData.uan) {
-      setErrors(['Please enter UAN and perform calculation first']);
+      setErrors(["Please enter UAN and perform calculation first"]);
       return;
     }
 
@@ -130,25 +149,25 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
       edli: calcResult.edli,
       adminCharge: calcResult.adminCharge,
       edliAdminCharge: calcResult.edliAdminCharge,
-      ncpDays: calcResult.ncpDays
+      ncpDays: calcResult.ncpDays,
     };
 
     setFormData(updated);
-    setSuccess('Calculation applied to form');
+    setSuccess("Calculation applied to form");
     setErrors([]);
   };
 
   // ========== FORM HANDLERS ==========
   const handleFormChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleAddRecord = (e) => {
     e.preventDefault();
 
     if (!formData.uan || !formData.name) {
-      setErrors(['UAN and Name are required']);
+      setErrors(["UAN and Name are required"]);
       return;
     }
 
@@ -167,24 +186,36 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
       edliAdminCharge: parseFloat(formData.edliAdminCharge) || 0,
       ncpDays: parseInt(formData.ncpDays) || 0,
       refundAdvances: parseFloat(formData.refundAdvances) || 0,
-      id: Date.now()
+      id: Date.now(),
     };
 
-    setPFData(prev => {
-      const existing = prev.findIndex(r => r.uan === record.uan);
+    setPFData((prev) => {
+      const existing = prev.findIndex((r) => r.uan === record.uan);
       if (existing >= 0) {
         const updated = [...prev];
         updated[existing] = record;
-        setSuccess('Record updated successfully');
+        setSuccess("Record updated successfully");
         return updated;
       }
-      setSuccess('Record added successfully');
+      setSuccess("Record added successfully");
       return [...prev, record];
     });
 
     setFormData({
-      uan: '', name: '', grossWages: '', epfWages: '', epsWages: '',
-      edliWages: '', epfEe: '', eps: '', epfEr: '', edli: '', adminCharge: '', edliAdminCharge: '', ncpDays: '0', refundAdvances: '0'
+      uan: "",
+      name: "",
+      grossWages: "",
+      epfWages: "",
+      epsWages: "",
+      edliWages: "",
+      epfEe: "",
+      eps: "",
+      epfEr: "",
+      edli: "",
+      adminCharge: "",
+      edliAdminCharge: "",
+      ncpDays: "0",
+      refundAdvances: "0",
     });
     setErrors([]);
   };
@@ -192,41 +223,41 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
   // ========== DATA MANIPULATION HANDLERS ==========
   const handleDeleteRecord = (uan) => {
     if (!uan) {
-      setErrors(['Cannot delete record without UAN']);
+      setErrors(["Cannot delete record without UAN"]);
       return;
     }
-    setPFData(prev => prev.filter(r => r.uan !== uan));
+    setPFData((prev) => prev.filter((r) => r.uan !== uan));
     setErrors([]);
-    setSuccess('Record deleted successfully');
+    setSuccess("Record deleted successfully");
     // Clear success message after 3 seconds
-    setTimeout(() => setSuccess(''), 3000);
+    setTimeout(() => setSuccess(""), 3000);
   };
 
   const handleClearAll = () => {
-    if (window.confirm('Are you sure you want to clear all records?')) {
+    if (window.confirm("Are you sure you want to clear all records?")) {
       setPFData([]);
       setErrors([]);
-      setSuccess('All records cleared successfully');
+      setSuccess("All records cleared successfully");
       // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(''), 3000);
+      setTimeout(() => setSuccess(""), 3000);
     }
   };
 
   // ========== ECR IMPORT HANDLERS ==========
   const handleECRImport = (file) => {
     if (!file) return;
-    
+
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const content = e.target.result;
         const records = parseECRContent(content);
-        
+
         if (records.length === 0) {
-          setErrors(['No valid ECR records found in file']);
+          setErrors(["No valid ECR records found in file"]);
           return;
         }
-        
+
         setPFData(records);
         setSuccess(`Imported ${records.length} records from ECR file`);
         setErrors([]);
@@ -239,18 +270,18 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
 
   const handleCSVImport = (file) => {
     if (!file) return;
-    
+
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const content = e.target.result;
         const records = parseCSVContent(content);
-        
+
         if (records.length === 0) {
-          setErrors(['No valid records found in CSV file']);
+          setErrors(["No valid records found in CSV file"]);
           return;
         }
-        
+
         setPFData(records);
         setSuccess(`Imported ${records.length} records from CSV file`);
         setErrors([]);
@@ -261,30 +292,100 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
     reader.readAsText(file);
   };
 
+  const handleParseECRLine = () => {
+    if (!ecrLine.trim()) {
+      setErrors(["Please paste ECR line(s) first"]);
+      return;
+    }
+
+    try {
+      const records = parseECRContent(ecrLine.trim());
+      if (!records.length) {
+        setErrors(["No valid ECR records found in the pasted text"]);
+        return;
+      }
+
+      const normalizedRecords = records.map((record) => ({
+        ...record,
+        id: record.uan
+          ? `${record.uan}_${Date.now()}_${Math.random()}`
+          : `ECR_${Date.now()}_${Math.random()}`,
+        name: record.name.trim(),
+        grossWages: parseFloat(record.grossWages) || 0,
+        epfWages: parseFloat(record.epfWages) || 0,
+        epsWages: parseFloat(record.epsWages) || 0,
+        edliWages: parseFloat(record.edliWages) || 0,
+        epfEe: parseFloat(record.epfEe) || 0,
+        eps: parseFloat(record.eps) || 0,
+        epfEr: parseFloat(record.epfEr) || 0,
+        ncpDays: parseInt(record.ncpDays) || 0,
+      }));
+
+      const invalidRecords = normalizedRecords.filter(
+        (record) =>
+          record.grossWages < record.epfWages ||
+          record.grossWages < record.epsWages ||
+          record.grossWages < record.edliWages,
+      );
+
+      if (invalidRecords.length > 0) {
+        setErrors([
+          "One or more pasted ECR records have gross wages lower than contribution wages. Please verify the input order: UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS",
+        ]);
+        return;
+      }
+
+      setPFData((prev) => {
+        const updated = [...prev];
+        normalizedRecords.forEach((record) => {
+          const existingIndex = updated.findIndex((r) => r.uan === record.uan);
+          if (existingIndex >= 0) {
+            updated[existingIndex] = record;
+          } else {
+            updated.push(record);
+          }
+        });
+        return updated;
+      });
+
+      setSuccess(
+        `${normalizedRecords.length} ECR record(s) imported successfully`,
+      );
+      setErrors([]);
+      setEcrLine("");
+    } catch (error) {
+      setErrors([`Failed to parse ECR line(s): ${error.message}`]);
+    }
+  };
+
   // ========== EXPORT HANDLERS ==========
   const downloadECRFile = () => {
     if (pfData.length === 0) {
-      setToast({ message: 'No data to export', type: 'error' });
+      setToast({ message: "No data to export", type: "error" });
       return;
     }
 
     if (!estCode.trim()) {
-      setToast({ message: 'Please enter establishment code', type: 'error' });
+      setToast({ message: "Please enter establishment code", type: "error" });
       return;
     }
 
-    setToast({ message: 'Downloading ECR file...', type: 'loading', duration: 0 });
+    setToast({
+      message: "Downloading ECR file...",
+      type: "loading",
+      duration: 0,
+    });
 
     // Generate filename in EPFO format
     const fileName = generateECRFilename(estCode, month, year);
-    
+
     // Generate EPFO-compliant content (NO headers, NO comments)
     const content = generateECRFileContent(pfData);
-    
+
     // Create and download file
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = fileName;
     document.body.appendChild(a);
@@ -292,24 +393,34 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    setToast({ message: `ECR file downloaded: ${fileName}`, type: 'success', duration: 3000 });
+    setToast({
+      message: `ECR file downloaded: ${fileName}`,
+      type: "success",
+      duration: 3000,
+    });
   };
 
   const downloadCSVFile = () => {
     if (pfData.length === 0) {
-      setToast({ message: 'No data to export', type: 'error' });
+      setToast({ message: "No data to export", type: "error" });
       return;
     }
 
-    setToast({ message: 'Downloading CSV file...', type: 'loading', duration: 0 });
+    setToast({
+      message: "Downloading CSV file...",
+      type: "loading",
+      duration: 0,
+    });
 
     const csvContent = generateCSVContent(pfData, company);
-    const monthName = new Date(2024, month - 1).toLocaleString('default', { month: 'long' });
+    const monthName = new Date(2024, month - 1).toLocaleString("default", {
+      month: "long",
+    });
     const fileName = `PF_Data_${monthName}_${year}.csv`;
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = fileName;
     document.body.appendChild(a);
@@ -317,18 +428,22 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    setToast({ message: `CSV file downloaded: ${fileName}`, type: 'success', duration: 3000 });
+    setToast({
+      message: `CSV file downloaded: ${fileName}`,
+      type: "success",
+      duration: 3000,
+    });
   };
 
   // ========== PREVIEW HANDLERS ==========
   const previewECRContent = () => {
     if (pfData.length === 0) {
-      setErrors(['No data to preview']);
+      setErrors(["No data to preview"]);
       return;
     }
-    
+
     const content = generateECRFileContent(pfData);
-    
+
     // Create preview window
     const previewWindow = window.open();
     previewWindow.document.write(`
@@ -345,21 +460,29 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
             <h3>EPFO ECR File Preview (${pfData.length} records)</h3>
             <p>Format: UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS</p>
           </div>
-          <div>${content.replace(/\n/g, '<br>')}</div>
+          <div>${content.replace(/\n/g, "<br>")}</div>
         </body>
       </html>
     `);
   };
 
   // ========== UTILITIES ==========
-  const filteredData = pfData.filter(r =>
-    r.uan.includes(searchQuery) || r.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredData = pfData.filter(
+    (r) =>
+      r.uan.includes(searchQuery) ||
+      r.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const totals = getTotals();
 
   const formatINR = (num) => {
-    return '₹' + (num || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    return (
+      "₹" +
+      (num || 0).toLocaleString("en-IN", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      })
+    );
   };
 
   // ========== RENDER ==========
@@ -367,12 +490,15 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
     <div className="epf-container">
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
       {/* Header */}
-      <div style={{ marginBottom: '16px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '6px' }}>
+      <div style={{ marginBottom: "16px" }}>
+        <h1
+          style={{ fontSize: "24px", fontWeight: "700", marginBottom: "6px" }}
+        >
           EPF/ECR Generator
         </h1>
-        <p style={{ color: 'var(--text-light)', fontSize: '14px' }}>
-          Generate EPFO-compliant ECR files (Format: UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS)
+        <p style={{ color: "var(--text-light)", fontSize: "14px" }}>
+          Generate EPFO-compliant ECR files (Format:
+          UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS)
         </p>
       </div>
 
@@ -396,87 +522,108 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
       )}
 
       {/* Instruction Message */}
-      <div style={{
-        background: 'var(--info-bg)',
-        border: '1px solid var(--info-border)',
-        borderRadius: 'var(--radius)',
-        padding: '12px 16px',
-        marginBottom: '20px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        fontSize: '14px',
-        color: 'var(--text)'
-      }}>
-        <span style={{ fontSize: '18px' }}>ℹ️</span>
+      <div
+        style={{
+          background: "var(--info-bg)",
+          border: "1px solid var(--info-border)",
+          borderRadius: "var(--radius)",
+          padding: "12px 16px",
+          marginBottom: "20px",
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          fontSize: "14px",
+          color: "var(--text)",
+        }}
+      >
+        <span style={{ fontSize: "18px" }}>ℹ️</span>
         <div>
-          <strong>EPFO ECR Format:</strong> Generates 10-field format: <code>UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS</code>
+          <strong>EPFO ECR Format:</strong> Generates 10-field format:{" "}
+          <code>
+            UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS
+          </code>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="epf-tabs">
         <button
-          className={`epf-tab-btn ${activeTab === 'instructions' ? 'active' : ''}`}
-          onClick={() => setActiveTab('instructions')}
+          className={`epf-tab-btn ${activeTab === "instructions" ? "active" : ""}`}
+          onClick={() => setActiveTab("instructions")}
         >
-          <FileText size={16} style={{ marginRight: '4px' }} />
+          <FileText size={16} style={{ marginRight: "4px" }} />
           Instructions
         </button>
         <button
-          className={`epf-tab-btn ${activeTab === 'calculator' ? 'active' : ''}`}
-          onClick={() => setActiveTab('calculator')}
+          className={`epf-tab-btn ${activeTab === "calculator" ? "active" : ""}`}
+          onClick={() => setActiveTab("calculator")}
         >
-          <Calculator size={16} style={{ marginRight: '4px' }} />
+          <Calculator size={16} style={{ marginRight: "4px" }} />
           PF Calculator
         </button>
         <button
-          className={`epf-tab-btn ${activeTab === 'form' ? 'active' : ''}`}
-          onClick={() => setActiveTab('form')}
+          className={`epf-tab-btn ${activeTab === "form" ? "active" : ""}`}
+          onClick={() => setActiveTab("form")}
         >
-          <Plus size={16} style={{ marginRight: '4px' }} />
+          <Plus size={16} style={{ marginRight: "4px" }} />
           Add Record
         </button>
         <button
-          className={`epf-tab-btn ${activeTab === 'preview' ? 'active' : ''}`}
-          onClick={() => setActiveTab('preview')}
+          className={`epf-tab-btn ${activeTab === "preview" ? "active" : ""}`}
+          onClick={() => setActiveTab("preview")}
         >
-          <Eye size={16} style={{ marginRight: '4px' }} />
+          <Eye size={16} style={{ marginRight: "4px" }} />
           Preview ({pfData.length})
         </button>
         <button
-          className={`epf-tab-btn ${activeTab === 'export' ? 'active' : ''}`}
-          onClick={() => setActiveTab('export')}
+          className={`epf-tab-btn ${activeTab === "export" ? "active" : ""}`}
+          onClick={() => setActiveTab("export")}
         >
-          <Download size={16} style={{ marginRight: '4px' }} />
+          <Download size={16} style={{ marginRight: "4px" }} />
           Export
         </button>
       </div>
 
       {/* TAB: INSTRUCTIONS */}
-      {activeTab === 'instructions' && (
+      {activeTab === "instructions" && (
         <div className="epf-section">
           <div className="epf-section-title">
             <FileText size={20} /> Getting Started - How to Use This Tool
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "24px",
+            }}
+          >
             {/* Left Column - Steps 1-3 */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "24px" }}
+            >
               {/* Step 1 */}
               <div className="instruction-card">
                 <h3>📊 Step 1: Import Employee Data</h3>
                 <p>You can import employee data in two ways:</p>
                 <ul>
-                  <li><strong>CSV import :</strong> upload CSV formatted data in CSV UPLOAD PAGE by downloding template</li>
-                  <li><strong>Manual Entry:</strong> Click "Add Record" tab to add employees one by one</li>
+                  <li>
+                    <strong>CSV import :</strong> upload CSV formatted data in
+                    CSV UPLOAD PAGE by downloding template
+                  </li>
+                  <li>
+                    <strong>Manual Entry:</strong> Click "Add Record" tab to add
+                    employees one by one
+                  </li>
                 </ul>
               </div>
 
               {/* Step 2 */}
               <div className="instruction-card">
                 <h3>📁 Step 2: Review & Preview Data</h3>
-                <p>In the <strong>Preview</strong> tab, you can:</p>
+                <p>
+                  In the <strong>Preview</strong> tab, you can:
+                </p>
                 <ul>
                   <li>View all imported/added employee records in a table</li>
                   <li>See calculated PF contributions for each employee</li>
@@ -489,24 +636,49 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
               {/* Step 3 */}
               <div className="instruction-card">
                 <h3>📤 Step 3: Export EPFO ECR File</h3>
-                <p>In the <strong>Export</strong> tab, download:</p>
+                <p>
+                  In the <strong>Export</strong> tab, download:
+                </p>
                 <ul>
-                  <li><strong>ECR File (TXT):</strong> EPFO-compliant format for ECR submission</li>
-                  <li><strong>CSV File:</strong> For your records and further processing</li>
-                  <li>Files are named: <code>[ESTCODE]_ECR_[Month][Year].txt</code></li>
-                  <li>Example: <code>APKP2204098000_ECR_Dec25.txt</code></li>
+                  <li>
+                    <strong>ECR File (TXT):</strong> EPFO-compliant format for
+                    ECR submission
+                  </li>
+                  <li>
+                    <strong>CSV File:</strong> For your records and further
+                    processing
+                  </li>
+                  <li>
+                    Files are named:{" "}
+                    <code>[ESTCODE]_ECR_[Month][Year].txt</code>
+                  </li>
+                  <li>
+                    Example: <code>APKP2204098000_ECR_Dec25.txt</code>
+                  </li>
                 </ul>
               </div>
             </div>
 
             {/* Right Column - Remaining Cards */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "24px" }}
+            >
               {/* File Format */}
               <div className="instruction-card">
                 <h3>📋 File Format Requirements</h3>
-                <div style={{ background: 'rgba(37, 99, 235, 0.05)', padding: '12px', borderRadius: '6px', fontSize: '13px', fontFamily: 'monospace' }}>
-                  <p><strong>ECR Format (10 fields):</strong></p>
-                  <code style={{ fontSize: '11px', wordBreak: 'break-all' }}>
+                <div
+                  style={{
+                    background: "rgba(37, 99, 235, 0.05)",
+                    padding: "12px",
+                    borderRadius: "6px",
+                    fontSize: "13px",
+                    fontFamily: "monospace",
+                  }}
+                >
+                  <p>
+                    <strong>ECR Format (10 fields):</strong>
+                  </p>
+                  <code style={{ fontSize: "11px", wordBreak: "break-all" }}>
                     UAN#~#NAME#~#GROSS#~#PF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP
                   </code>
                 </div>
@@ -515,20 +687,46 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
               {/* Contribution */}
               <div className="instruction-card">
                 <h3>⚙️ Contribution Breakdown</h3>
-                <div style={{ background: 'rgba(37, 99, 235, 0.05)', padding: '12px', borderRadius: '6px', fontSize: '13px' }}>
-                  <p><strong>Employee (EE):</strong> 12% of PF Wages</p>
-                  <p><strong>Employer (ER):</strong> 3.67% (EPF) + 0.17% (Admin) = 3.84%</p>
-                  <p><strong>EPS:</strong> Part of employer contribution</p>
-                  <p><strong>EDLI:</strong> 0.5% + 0.01% admin charge</p>
+                <div
+                  style={{
+                    background: "rgba(37, 99, 235, 0.05)",
+                    padding: "12px",
+                    borderRadius: "6px",
+                    fontSize: "13px",
+                  }}
+                >
+                  <p>
+                    <strong>Employee (EE):</strong> 12% of PF Wages
+                  </p>
+                  <p>
+                    <strong>Employer (ER):</strong> 3.67% (EPF) + 0.17% (Admin)
+                    = 3.84%
+                  </p>
+                  <p>
+                    <strong>EPS:</strong> Part of employer contribution
+                  </p>
+                  <p>
+                    <strong>EDLI:</strong> 0.5% + 0.01% admin charge
+                  </p>
                 </div>
               </div>
 
               {/* Important Notes */}
-              <div className="instruction-card" style={{ background: 'rgba(255, 193, 7, 0.1)', borderLeft: '4px solid #ffc107' }}>
+              <div
+                className="instruction-card"
+                style={{
+                  background: "rgba(255, 193, 7, 0.1)",
+                  borderLeft: "4px solid #ffc107",
+                }}
+              >
                 <h3>⚠️ Important Notes</h3>
                 <ul>
-                  <li>PF is calculated on Basic + DA only (not gross salary)</li>
-                  <li>Configure Establishment Code in Company Settings first</li>
+                  <li>
+                    PF is calculated on Basic + DA only (not gross salary)
+                  </li>
+                  <li>
+                    Configure Establishment Code in Company Settings first
+                  </li>
                   <li>NCP Days (No Contribution Period) reduce PF wages</li>
                   <li>Always verify data before submitting to EPFO</li>
                 </ul>
@@ -539,14 +737,25 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
       )}
 
       {/* TAB: CALCULATOR */}
-      {activeTab === 'calculator' && (
+      {activeTab === "calculator" && (
         <div className="epf-section">
           <div className="epf-section-title">
             <Calculator size={20} /> PF Contribution Calculator
           </div>
-          
-          <div style={{ background: 'var(--info-bg)', border: '1px solid var(--info-border)', borderRadius: 'var(--radius)', padding: '12px', marginBottom: '20px', fontSize: '13px' }}>
-            <strong>Note:</strong> PF contributions are calculated on Basic Salary + Dearness Allowance (DA) only, not on Gross Salary (per EPFO guidelines).
+
+          <div
+            style={{
+              background: "var(--info-bg)",
+              border: "1px solid var(--info-border)",
+              borderRadius: "var(--radius)",
+              padding: "12px",
+              marginBottom: "20px",
+              fontSize: "13px",
+            }}
+          >
+            <strong>Note:</strong> PF contributions are calculated on Basic
+            Salary + Dearness Allowance (DA) only, not on Gross Salary (per EPFO
+            guidelines).
           </div>
 
           <div className="epf-calculator">
@@ -585,12 +794,18 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
                 />
               </div>
 
-              <button className="epf-btn epf-btn-primary" onClick={handleCalculate}>
+              <button
+                className="epf-btn epf-btn-primary"
+                onClick={handleCalculate}
+              >
                 <Calculator size={16} /> Calculate
               </button>
 
               {calcResult && (
-                <button className="epf-btn epf-btn-success" onClick={handleApplyCalculation}>
+                <button
+                  className="epf-btn epf-btn-success"
+                  onClick={handleApplyCalculation}
+                >
                   Apply to Form
                 </button>
               )}
@@ -600,52 +815,129 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
               <div className="epf-calculator-outputs">
                 <div className="epf-calc-output-row">
                   <span className="epf-calc-output-label">Gross Wages</span>
-                  <span className="epf-calc-output-value">{formatINR(calcResult.grossWages)}</span>
+                  <span className="epf-calc-output-value">
+                    {formatINR(calcResult.grossWages)}
+                  </span>
                 </div>
                 <div className="epf-calc-output-row">
-                  <span className="epf-calc-output-label">PF Wages (Capped)</span>
-                  <span className="epf-calc-output-value">{formatINR(calcResult.epfWages)}</span>
+                  <span className="epf-calc-output-label">
+                    PF Wages (Capped)
+                  </span>
+                  <span className="epf-calc-output-value">
+                    {formatINR(calcResult.epfWages)}
+                  </span>
                 </div>
-                <div style={{ padding: '12px 0', borderTop: '2px solid var(--border)', marginTop: '12px' }}>
-                  <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '8px', textTransform: 'uppercase', color: 'var(--text-light)' }}>
+                <div
+                  style={{
+                    padding: "12px 0",
+                    borderTop: "2px solid var(--border)",
+                    marginTop: "12px",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      marginBottom: "8px",
+                      textTransform: "uppercase",
+                      color: "var(--text-light)",
+                    }}
+                  >
                     Employee Deductions
                   </div>
                   <div className="epf-calc-output-row">
-                    <span className="epf-calc-output-label">EPF Employee (12%)</span>
-                    <span className="epf-calc-output-value">{formatINR(calcResult.epfEe)}</span>
+                    <span className="epf-calc-output-label">
+                      EPF Employee (12%)
+                    </span>
+                    <span className="epf-calc-output-value">
+                      {formatINR(calcResult.epfEe)}
+                    </span>
                   </div>
                 </div>
-                <div style={{ padding: '12px 0', borderTop: '2px solid var(--border)' }}>
-                  <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '8px', textTransform: 'uppercase', color: 'var(--text-light)' }}>
+                <div
+                  style={{
+                    padding: "12px 0",
+                    borderTop: "2px solid var(--border)",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      marginBottom: "8px",
+                      textTransform: "uppercase",
+                      color: "var(--text-light)",
+                    }}
+                  >
                     Employer Contributions
                   </div>
                   <div className="epf-calc-output-row">
                     <span className="epf-calc-output-label">EPS (8.33%)</span>
-                    <span className="epf-calc-output-value">{formatINR(calcResult.eps)}</span>
+                    <span className="epf-calc-output-value">
+                      {formatINR(calcResult.eps)}
+                    </span>
                   </div>
                   <div className="epf-calc-output-row">
-                    <span className="epf-calc-output-label">EPF ER (3.67%)</span>
-                    <span className="epf-calc-output-value">{formatINR(calcResult.epfEr)}</span>
+                    <span className="epf-calc-output-label">
+                      EPF ER (3.67%)
+                    </span>
+                    <span className="epf-calc-output-value">
+                      {formatINR(calcResult.epfEr)}
+                    </span>
                   </div>
                   <div className="epf-calc-output-row">
                     <span className="epf-calc-output-label">EDLI (0.5%)</span>
-                    <span className="epf-calc-output-value">{formatINR(calcResult.edli)}</span>
+                    <span className="epf-calc-output-value">
+                      {formatINR(calcResult.edli)}
+                    </span>
                   </div>
                   <div className="epf-calc-output-row">
-                    <span className="epf-calc-output-label">Admin Charge (0.17%)</span>
-                    <span className="epf-calc-output-value">{formatINR(calcResult.adminCharge)}</span>
+                    <span className="epf-calc-output-label">
+                      Admin Charge (0.17%)
+                    </span>
+                    <span className="epf-calc-output-value">
+                      {formatINR(calcResult.adminCharge)}
+                    </span>
                   </div>
                   <div className="epf-calc-output-row">
-                    <span className="epf-calc-output-label">EDLI Admin (0.01%)</span>
-                    <span className="epf-calc-output-value">{formatINR(calcResult.edliAdminCharge)}</span>
+                    <span className="epf-calc-output-label">
+                      EDLI Admin (0.01%)
+                    </span>
+                    <span className="epf-calc-output-value">
+                      {formatINR(calcResult.edliAdminCharge)}
+                    </span>
                   </div>
-                  <div className="epf-calc-output-row" style={{ paddingTop: '8px', marginTop: '8px', borderTop: '1px solid var(--border)', fontWeight: '600' }}>
-                    <span className="epf-calc-output-label">Total Employer</span>
-                    <span className="epf-calc-output-value">{formatINR(calcResult.totalEmployerContribution)}</span>
+                  <div
+                    className="epf-calc-output-row"
+                    style={{
+                      paddingTop: "8px",
+                      marginTop: "8px",
+                      borderTop: "1px solid var(--border)",
+                      fontWeight: "600",
+                    }}
+                  >
+                    <span className="epf-calc-output-label">
+                      Total Employer
+                    </span>
+                    <span className="epf-calc-output-value">
+                      {formatINR(calcResult.totalEmployerContribution)}
+                    </span>
                   </div>
-                  <div className="epf-calc-output-row" style={{ paddingTop: '8px', marginTop: '8px', borderTop: '2px solid var(--border)', fontWeight: '700' }}>
-                    <span className="epf-calc-output-label">Total Contribution</span>
-                    <span className="epf-calc-output-value">{formatINR(calcResult.totalContribution)}</span>
+                  <div
+                    className="epf-calc-output-row"
+                    style={{
+                      paddingTop: "8px",
+                      marginTop: "8px",
+                      borderTop: "2px solid var(--border)",
+                      fontWeight: "700",
+                    }}
+                  >
+                    <span className="epf-calc-output-label">
+                      Total Contribution
+                    </span>
+                    <span className="epf-calc-output-value">
+                      {formatINR(calcResult.totalContribution)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -655,7 +947,7 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
       )}
 
       {/* TAB: FORM */}
-      {activeTab === 'form' && (
+      {activeTab === "form" && (
         <div className="epf-section">
           <div className="epf-section-title">
             <Plus size={20} /> Add/Edit PF Record
@@ -834,15 +1126,32 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
 
             <div className="epf-btn-group">
               <button type="submit" className="epf-btn epf-btn-primary">
-                <Plus size={16} /> {pfData.some(r => r.uan === formData.uan) ? 'Update Record' : 'Add Record'}
+                <Plus size={16} />{" "}
+                {pfData.some((r) => r.uan === formData.uan)
+                  ? "Update Record"
+                  : "Add Record"}
               </button>
               <button
                 type="button"
                 className="epf-btn epf-btn-secondary"
-                onClick={() => setFormData({
-                  uan: '', name: '', grossWages: '', epfWages: '', epsWages: '',
-                  edliWages: '', epfEe: '', eps: '', epfEr: '', edli: '', adminCharge: '', edliAdminCharge: '', ncpDays: '0', refundAdvances: '0'
-                })}
+                onClick={() =>
+                  setFormData({
+                    uan: "",
+                    name: "",
+                    grossWages: "",
+                    epfWages: "",
+                    epsWages: "",
+                    edliWages: "",
+                    epfEe: "",
+                    eps: "",
+                    epfEr: "",
+                    edli: "",
+                    adminCharge: "",
+                    edliAdminCharge: "",
+                    ncpDays: "0",
+                    refundAdvances: "0",
+                  })
+                }
               >
                 Clear Form
               </button>
@@ -852,25 +1161,36 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
       )}
 
       {/* TAB: PREVIEW */}
-      {activeTab === 'preview' && (
+      {activeTab === "preview" && (
         <div className="epf-section">
           <div className="epf-section-title">
             <Eye size={20} /> Preview & Manage Data
           </div>
 
           {/* Import Section */}
-          <div style={{ marginBottom: '20px', padding: '15px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-            <h4 style={{ marginBottom: '10px' }}>Import Existing ECR/CSV</h4>
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <div
+            style={{
+              marginBottom: "20px",
+              padding: "15px",
+              background: "#f8fafc",
+              borderRadius: "8px",
+              border: "1px solid #e2e8f0",
+            }}
+          >
+            <h4 style={{ marginBottom: "10px" }}>Import Existing ECR/CSV</h4>
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
               <div>
                 <input
                   type="file"
                   id="ecr-import"
                   accept=".txt"
                   onChange={(e) => handleECRImport(e.target.files[0])}
-                  style={{ display: 'none' }}
+                  style={{ display: "none" }}
                 />
-                <label htmlFor="ecr-import" className="epf-btn epf-btn-secondary">
+                <label
+                  htmlFor="ecr-import"
+                  className="epf-btn epf-btn-secondary"
+                >
                   <Upload size={16} /> Import ECR (.txt)
                 </label>
               </div>
@@ -880,16 +1200,60 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
                   id="csv-import"
                   accept=".csv"
                   onChange={(e) => handleCSVImport(e.target.files[0])}
-                  style={{ display: 'none' }}
+                  style={{ display: "none" }}
                 />
-                <label htmlFor="csv-import" className="epf-btn epf-btn-secondary">
+                <label
+                  htmlFor="csv-import"
+                  className="epf-btn epf-btn-secondary"
+                >
                   <Upload size={16} /> Import CSV (.csv)
                 </label>
               </div>
             </div>
-            <p style={{ fontSize: '12px', color: '#64748b', marginTop: '8px' }}>
+            <p style={{ fontSize: "12px", color: "#64748b", marginTop: "8px" }}>
               Supports EPFO ECR format (10 fields) and detailed CSV format
             </p>
+
+            <div style={{ marginTop: "20px" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "8px",
+                  fontWeight: 600,
+                }}
+              >
+                Paste ECR line(s):
+              </label>
+              <textarea
+                value={ecrLine}
+                onChange={(e) => setEcrLine(e.target.value)}
+                placeholder="#~#101608407892#~#LAKSHMI BHAVANI CHIPPA#~#23800#~#10000#~#10000#~#10000#~#1200#~#833#~#367#~#0"
+                title="Order: UAN, NAME, GROSS_WAGES, EPF_WAGES, EPS_WAGES, EDLI_WAGES, EPF_EE, EPS, EPF_ER, NCP_DAYS"
+                style={{
+                  width: "100%",
+                  minHeight: "100px",
+                  padding: "10px",
+                  borderRadius: "8px",
+                  border: "1px solid #cbd5e1",
+                  fontFamily: "monospace",
+                  resize: "vertical",
+                }}
+              />
+              <small
+                style={{ color: "#64748b", display: "block", marginTop: "8px" }}
+              >
+                Field order:
+                UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS
+              </small>
+              <button
+                type="button"
+                className="epf-btn epf-btn-primary"
+                onClick={handleParseECRLine}
+                style={{ marginTop: "12px" }}
+              >
+                <Upload size={16} /> Import ECR Line
+              </button>
+            </div>
           </div>
 
           {/* Stats */}
@@ -901,15 +1265,28 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
               </div>
               <div className="epf-stat-card secondary">
                 <div className="epf-stat-label">Total Gross Wages</div>
-                <div className="epf-stat-value">{formatINR(totals.totalGrossWages)}</div>
+                <div className="epf-stat-value">
+                  {formatINR(totals.totalGrossWages)}
+                </div>
               </div>
               <div className="epf-stat-card success">
                 <div className="epf-stat-label">Employee Contribution</div>
-                <div className="epf-stat-value">{formatINR(totals.totalEPFEE)}</div>
+                <div className="epf-stat-value">
+                  {formatINR(totals.totalEPFEE)}
+                </div>
               </div>
               <div className="epf-stat-card warning">
                 <div className="epf-stat-label">Employer Contribution</div>
-                <div className="epf-stat-value">{formatINR(totals.totalEmployerContribution || (totals.totalEPS + totals.totalEPFER + totals.totalEDLI + (totals.totalAdminCharge || 0) + (totals.totalEDLIAdmin || 0)))}</div>
+                <div className="epf-stat-value">
+                  {formatINR(
+                    totals.totalEmployerContribution ||
+                      totals.totalEPS +
+                        totals.totalEPFER +
+                        totals.totalEDLI +
+                        (totals.totalAdminCharge || 0) +
+                        (totals.totalEDLIAdmin || 0),
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -923,10 +1300,10 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <button 
-                className="epf-btn epf-btn-secondary" 
+              <button
+                className="epf-btn epf-btn-secondary"
                 onClick={previewECRContent}
-                style={{ marginLeft: '10px' }}
+                style={{ marginLeft: "10px" }}
               >
                 <Eye size={16} /> Preview ECR Content
               </button>
@@ -952,7 +1329,7 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredData.map(record => (
+                  {filteredData.map((record) => (
                     <tr key={record.id || record.uan}>
                       <td>{record.uan}</td>
                       <td>{record.name}</td>
@@ -972,7 +1349,7 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
                             e.stopPropagation();
                             handleDeleteRecord(record.uan);
                           }}
-                          style={{ padding: '6px 12px', fontSize: '12px' }}
+                          style={{ padding: "6px 12px", fontSize: "12px" }}
                         >
                           <Trash2 size={14} />
                         </button>
@@ -993,10 +1370,10 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
           )}
 
           {pfData.length > 0 && (
-            <div className="epf-btn-group" style={{ marginTop: '20px' }}>
-              <button 
+            <div className="epf-btn-group" style={{ marginTop: "20px" }}>
+              <button
                 type="button"
-                className="epf-btn epf-btn-danger" 
+                className="epf-btn epf-btn-danger"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -1011,7 +1388,7 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
       )}
 
       {/* TAB: EXPORT */}
-      {activeTab === 'export' && (
+      {activeTab === "export" && (
         <div className="epf-section">
           <div className="epf-section-title">
             <Download size={20} /> Export PF Data
@@ -1027,17 +1404,23 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
                 placeholder="e.g., APKP2204098000"
                 maxLength="14"
               />
-              <small style={{ fontSize: '12px', color: '#64748b' }}>
-                Required for ECR file naming. Format: [ESTCODE]_ECR_[Month][Year].txt
+              <small style={{ fontSize: "12px", color: "#64748b" }}>
+                Required for ECR file naming. Format:
+                [ESTCODE]_ECR_[Month][Year].txt
               </small>
             </div>
 
             <div className="epf-form-group">
               <label>Month</label>
-              <select value={month} onChange={(e) => setMonth(parseInt(e.target.value))}>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
+              <select
+                value={month}
+                onChange={(e) => setMonth(parseInt(e.target.value))}
+              >
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
                   <option key={m} value={m}>
-                    {new Date(2024, m - 1).toLocaleString('default', { month: 'long' })}
+                    {new Date(2024, m - 1).toLocaleString("default", {
+                      month: "long",
+                    })}
                   </option>
                 ))}
               </select>
@@ -1045,25 +1428,50 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
 
             <div className="epf-form-group">
               <label>Year</label>
-              <select value={year} onChange={(e) => setYear(parseInt(e.target.value))}>
-                {[2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027].map(y => (
-                  <option key={y} value={y}>{y}</option>
+              <select
+                value={year}
+                onChange={(e) => setYear(parseInt(e.target.value))}
+              >
+                {[2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027].map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
                 ))}
               </select>
             </div>
           </div>
 
-          <div style={{ marginTop: '24px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '12px' }}>Export Formats</h3>
+          <div style={{ marginTop: "24px" }}>
+            <h3
+              style={{
+                fontSize: "16px",
+                fontWeight: "600",
+                marginBottom: "12px",
+              }}
+            >
+              Export Formats
+            </h3>
 
             <div className="epf-btn-group">
-              <button className="epf-btn epf-btn-primary" onClick={downloadECRFile} disabled={pfData.length === 0}>
+              <button
+                className="epf-btn epf-btn-primary"
+                onClick={downloadECRFile}
+                disabled={pfData.length === 0}
+              >
                 <FileText size={16} /> ECR Text (.txt) - EPFO Format
               </button>
-              <button className="epf-btn epf-btn-primary" onClick={downloadCSVFile} disabled={pfData.length === 0}>
+              <button
+                className="epf-btn epf-btn-primary"
+                onClick={downloadCSVFile}
+                disabled={pfData.length === 0}
+              >
                 <Table size={16} /> CSV Format
               </button>
-              <button className="epf-btn epf-btn-secondary" onClick={previewECRContent} disabled={pfData.length === 0}>
+              <button
+                className="epf-btn epf-btn-secondary"
+                onClick={previewECRContent}
+                disabled={pfData.length === 0}
+              >
                 <Eye size={16} /> Preview ECR
               </button>
             </div>
@@ -1082,9 +1490,24 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
             <div className="epf-alert epf-alert-success">
               <div className="epf-alert-icon">✓</div>
               <div className="epf-alert-content">
-                <strong>{pfData.length} records</strong> ready to export for <strong>{new Date(2024, month - 1).toLocaleString('default', { month: 'long' })} {year}</strong>
-                <div style={{ fontSize: '12px', marginTop: '8px', color: '#065f46' }}>
-                  ECR format: <code>UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS</code>
+                <strong>{pfData.length} records</strong> ready to export for{" "}
+                <strong>
+                  {new Date(2024, month - 1).toLocaleString("default", {
+                    month: "long",
+                  })}{" "}
+                  {year}
+                </strong>
+                <div
+                  style={{
+                    fontSize: "12px",
+                    marginTop: "8px",
+                    color: "#065f46",
+                  }}
+                >
+                  ECR format:{" "}
+                  <code>
+                    UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS
+                  </code>
                 </div>
               </div>
             </div>
