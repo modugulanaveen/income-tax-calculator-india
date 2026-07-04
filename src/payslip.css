@@ -1,0 +1,870 @@
+/* Payslip print styles - ORIGINAL */
+.payslip {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.06);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  color: var(--text);
+  margin: 16px auto;
+  max-width: 760px;
+  min-height: auto;
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+}
+
+/* Slight scaling when screen is smaller */
+@media (max-width: 1200px) {
+  .payslip {
+    max-width: 900px;
+  }
+}
+@media (max-width: 900px) {
+  .payslip {
+    max-width: 760px;
+    padding: 24px;
+    min-height: auto;
+  }
+}
+
+.payslip .payslip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center; /* vertically center header content */
+  gap: 16px;
+  padding: 11px 16px; /* tightened header */
+  border-bottom: 1px solid rgba(15, 23, 42, 0.04);
+}
+
+.payslip .brand-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.payslip .logo-square {
+  width: 100px;
+  height: 100px;
+  /* visual/placement handled by unified .company-logo above */
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.payslip .brand-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.payslip .logo-square {
+  width: 115px;
+  height: auto;
+  max-height: 115px;
+  object-fit: contain;
+  border-radius: 14px;
+  background: transparent;
+  padding: 10px;
+  box-shadow: none;
+  border: none;
+  flex-shrink: 0;
+}
+.payslip .company-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+.payslip .company-name {
+  font-weight: 800;
+  font-size: 20px;
+  color: var(--text);
+  line-height: 1.05;
+  margin: 0;
+  transform: translateY(4px);
+  padding-bottom: 2px;
+  transition: transform 180ms ease;
+}
+.payslip .company-address {
+  color: var(--text-light);
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.25;
+  font-weight: 400;
+  white-space: normal;
+  word-break: break-word;
+  max-width: 520px;
+}
+.payslip .month-block {
+  text-align: right;
+  min-width: 170px;
+  margin-left: 12px;
+  align-self: flex-start;
+}
+.payslip .month-block .month-label {
+  color: var(--text-light);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: none;
+}
+.payslip .month-block .month {
+  margin-top: 6px;
+  font-weight: 900;
+  font-size: 16px;
+  color: var(--text);
+  letter-spacing: 0.2px;
+}
+.payslip .month-block .sub {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-top: 4px;
+}
+
+/* Slight header spacing */
+.payslip .header-hr {
+  margin: 12px 0 0 0;
+  border-top: 0;
+}
+
+/* Employee summary and Net box */
+.payslip .summary-title {
+  font-weight: 800;
+  margin-top: 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #334155;
+  letter-spacing: 0.6px;
+  border-left: 4px solid rgba(59, 130, 246, 0.12);
+  padding-left: 12px;
+}
+.payslip .summary-row {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  padding: 8px 12px 0 12px;
+}
+/* Limit the summary column to a comfortable width so items don't drift */
+.payslip .summary-left {
+  flex: 0 0 420px;
+  max-width: 460px;
+  padding-right: 8px;
+}
+
+/* Use a fixed label column (Employee Name is the reference) so all labels start at the same X and colons align vertically */
+.payslip .summary-left {
+  --label-col: 160px;
+  --summary-bg: rgba(99, 102, 241, 0.04);
+  --summary-border: rgba(15, 23, 42, 0.03);
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--summary-bg);
+  border: 1px solid var(--summary-border);
+}
+.payslip .summary-left .summary-item {
+  display: grid;
+  grid-template-columns: var(--label-col) 1fr;
+  gap: 14px;
+  padding: 6px 0;
+  align-items: center;
+  position: relative;
+}
+.payslip .summary-left .summary-item .label {
+  font-weight: 400;
+  color: #6b7280;
+  font-size: 13px;
+  text-align: left;
+  padding-right: 0;
+}
+/* place the colon in a fixed position (aligned to the right edge of the label column) */
+.payslip .summary-left .summary-item .label::after {
+  content: ":";
+  color: #6b7280;
+  position: absolute;
+  left: calc(var(--label-col) - 10px);
+  top: 50%;
+  transform: translateY(-50%);
+}
+.payslip .summary-left .summary-item .value {
+  color: var(--text);
+  font-weight: 600;
+  text-align: left;
+}
+
+/* Slight vertical tightening for balance */
+.payslip .summary-left .summary-item {
+  line-height: 1.15;
+}
+
+/* subtle visual polish: keep card look but very light */
+.payslip .summary-left {
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.02);
+}
+
+/* small utility: allow fine-tuning of label column on smaller screens using override */
+@media (max-width: 900px) {
+  .payslip .summary-left {
+    --label-col: 150px;
+  }
+}
+
+/* On small screens, switch to stacked layout */
+@media (max-width: 700px) {
+  .payslip .summary-row {
+    padding-left: 8px;
+  }
+  .payslip .summary-left {
+    flex: 1;
+    max-width: none;
+    padding-right: 0;
+  }
+  .payslip .summary-left .summary-item {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .payslip .summary-left .summary-item .label {
+    text-align: left;
+    padding-right: 0;
+  }
+  /* make colon inline again on stacked layout */
+  .payslip .summary-left .summary-item .label::after {
+    content: ":";
+    margin-left: 6px;
+    position: static;
+    left: auto;
+    transform: none;
+  }
+}
+
+/* Net pay card — updated visual polish */
+.payslip .summary-right {
+  width: 300px;
+  border-radius: 10px;
+  background: #f3fff6;
+  border: 1px solid rgba(34, 197, 94, 0.12);
+  padding: 14px 18px;
+  text-align: left;
+  position: relative;
+  min-width: 220px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  transform: translateY(-10px);
+  transition: transform 220ms ease;
+  z-index: 2;
+}
+.payslip .summary-right::before {
+  content: "";
+  position: absolute;
+  left: 12px;
+  top: 14px;
+  bottom: 14px;
+  width: 6px;
+  background: var(--success);
+  border-radius: 6px;
+}
+.payslip .summary-right .small {
+  color: var(--text-light);
+  font-size: 13px;
+  font-weight: 700;
+  transform: translateX(12px);
+  padding-left: 8px;
+}
+.payslip .summary-right .net-amount {
+  font-weight: 900;
+  font-size: 28px;
+  color: var(--text);
+  margin-top: 8px;
+  display: block;
+  transform: translateX(12px);
+  padding-left: 8px;
+}
+.payslip .summary-right .meta-group {
+  margin-top: 12px;
+  border-top: 1px solid rgba(15, 23, 42, 0.03);
+  padding-top: 10px;
+  padding-left: 8px;
+}
+/* Tight grid for meta rows so values sit close to the colons */
+.payslip .summary-right .meta-row {
+  display: grid;
+  grid-template-columns: 1fr 12px minmax(36px, max-content);
+  gap: 8px;
+  align-items: center;
+  font-weight: 700;
+  color: var(--text);
+  font-size: 14px;
+  padding: 6px 0;
+}
+.payslip .summary-right .meta-row .meta-label {
+  color: var(--text-light);
+  font-weight: 700;
+  text-align: left;
+  padding-right: 6px;
+  white-space: nowrap;
+}
+.payslip .summary-right .meta-row .meta-colon {
+  color: var(--text-light);
+  text-align: center;
+}
+.payslip .summary-right .meta-row .meta-value {
+  color: var(--text);
+  font-weight: 900;
+  min-width: 36px;
+  text-align: right;
+}
+
+/* Earnings/Deductions table */
+.payslip .earnings-deductions {
+  margin-top: 18px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.04);
+}
+.payslip .ed-header {
+  display: grid;
+  grid-template-columns: 1.5fr minmax(120px, 160px) 1.5fr minmax(120px, 160px);
+  gap: 12px;
+  padding: 16px 22px;
+  background: #f8fafc;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+.payslip .ed-header div:nth-child(1),
+.payslip .ed-header div:nth-child(3) {
+  text-align: left;
+}
+.payslip .ed-header div:nth-child(2),
+.payslip .ed-header div:nth-child(4) {
+  text-align: right;
+}
+.payslip .ed-body {
+  padding: 10px 20px;
+  background: #fff;
+  min-height: auto;
+}
+.payslip .ed-row {
+  display: grid;
+  grid-template-columns: 1.5fr minmax(120px, 160px) 1.5fr minmax(120px, 160px);
+  gap: 12px;
+  padding: 12px 0;
+  min-height: 48px;
+  border-bottom: 1px solid #e5e7eb;
+  align-items: center;
+}
+.payslip .ed-row div {
+  padding-left: 6px;
+  padding-right: 6px;
+  word-break: break-word;
+}
+.payslip .ed-row div:nth-child(2),
+.payslip .ed-row div:nth-child(4) {
+  text-align: right;
+}
+.payslip .ed-row .ed-amt {
+  text-align: right;
+}
+.payslip .ed-row:nth-child(even) {
+  background: #fafafa;
+}
+.payslip .ed-row:last-child {
+  border-bottom: none;
+}
+.payslip .ed-amt {
+  text-align: right;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Visual indicator for reclassified items (dragged from another section) */
+.payslip .item-reclassified {
+  color: #7c3aed;
+  font-style: italic;
+}
+
+.payslip .moved-badge {
+  font-size: 0.85em;
+  opacity: 0.75;
+  font-weight: 500;
+  color: #f59e0b;
+  margin-left: 4px;
+}
+
+/* Visual style for muted zero amounts */
+.payslip .muted-zero {
+  color: #9ca3af;
+  opacity: 1;
+  font-weight: 700;
+}
+
+/* subtle divider line between earnings/deductions rows for readability */
+.payslip .ed-body {
+  border-top: 1px solid rgba(15, 23, 42, 0.02);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.02);
+}
+
+.payslip .ed-foot {
+  display: grid;
+  grid-template-columns: 1.5fr 160px 1.5fr 160px;
+  gap: 12px;
+  padding: 12px 20px;
+  background: #f9fafb;
+  border-top: 1px solid rgba(15, 23, 42, 0.03);
+  border-radius: 8px;
+  align-items: center;
+}
+.payslip .ed-foot .gross-label,
+.payslip .ed-foot .deductions-label {
+  color: var(--text-light);
+  font-size: 13px;
+  font-weight: 700;
+  background: transparent;
+  padding: 6px 8px;
+  border-radius: 6px;
+  justify-self: start;
+}
+.payslip .ed-foot .gross-amount,
+.payslip .ed-foot .deductions-amount {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 16px;
+  text-align: right;
+  background: transparent;
+  padding: 6px 8px;
+  border-radius: 6px;
+  justify-self: end;
+}
+
+@media (max-width: 700px) {
+  .payslip .ed-foot {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 10px;
+  }
+  .payslip .ed-foot .gross-amount,
+  .payslip .ed-foot .deductions-amount {
+    text-align: left;
+  }
+}
+
+/* Bottom summary bar (Total Net Payable) */
+.payslip .net-bar {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 10px;
+  background: rgba(34, 197, 94, 0.04);
+  border: 1px solid rgba(34, 197, 94, 0.06);
+  padding: 12px;
+  gap: 12px;
+}
+.payslip .net-bar .desc {
+  color: var(--text-light);
+  font-size: 13px;
+}
+.payslip .net-bar .desc .muted {
+  display: block;
+  color: var(--text-light);
+  font-size: 12px;
+  margin-top: 6px;
+}
+.payslip .net-bar .payable {
+  background: #ecfdf5;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 900;
+  color: #065f46;
+  font-size: 18px;
+  box-shadow: none;
+  border: 1px solid rgba(6, 95, 70, 0.06);
+}
+
+/* Amount in words — subtle, italicized and separated for clarity */
+.payslip .amount-words {
+  margin-top: 14px;
+  color: #6b7280; /* subtle gray */
+  font-size: 11px;
+  text-align: left;
+  font-style: italic;
+  padding: 12px 8px 6px 8px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  opacity: 0.95;
+  letter-spacing: 0.2px;
+}
+
+/* slight visual spacing tweak to keep amount-words aligned with summary */
+.payslip .amount-words {
+  border-radius: 4px;
+}
+
+.net-bar {
+  margin-top: 18px;
+}
+/* unified net-bar styles (bottom summary) */
+.payslip .net-bar {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 8px;
+  background: #f0fdf4;
+  border-top: 1px solid rgba(34, 197, 94, 0.12);
+  padding: 14px;
+  gap: 12px;
+}
+.payslip .net-bar .desc {
+  color: var(--text-light);
+  font-size: 13px;
+}
+.payslip .net-bar .desc .muted {
+  display: block;
+  color: var(--text-light);
+  font-size: 12px;
+  margin-top: 6px;
+}
+.payslip .net-bar .payable {
+  background: #ecfdf5;
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-weight: 900;
+  color: #065f46;
+  font-size: 18px;
+  box-shadow: 0 6px 16px rgba(6, 95, 70, 0.06);
+}
+
+/* consolidated: see .payslip .amount-words block above for final styling */
+
+.payslip .footer-note {
+  margin-top: 18px;
+  padding-top: 14px;
+  padding-bottom: 10px;
+  color: #94a3b8;
+  font-size: 11px;
+  text-align: center;
+  position: relative;
+  font-style: normal;
+  line-height: 1.2;
+  background: rgba(15, 23, 42, 0.01);
+  border-radius: 8px;
+  margin-left: 8px;
+  margin-right: 8px;
+  padding-left: 14px;
+  padding-right: 14px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+/* subtle flanking separators for footer */
+.payslip .footer-note::before,
+.payslip .footer-note::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 26%;
+  height: 1px;
+  background: rgba(15, 23, 42, 0.04);
+  transform: translateY(-50%);
+}
+.payslip .footer-note::before {
+  left: 6%;
+}
+.payslip .footer-note::after {
+  right: 6%;
+}
+
+.payslip .payslip-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.scroll-top-btn {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.25);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.scroll-top-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px rgba(37, 99, 235, 0.28);
+}
+
+.payslip .payslip-actions .btn {
+  border-radius: 8px;
+}
+.payslip .payslip-actions .btn.btn-primary {
+  background: linear-gradient(180deg, #0ea5b7, #0284c7);
+  color: #fff;
+  border: none;
+  box-shadow: 0 8px 20px rgba(2, 132, 199, 0.12);
+}
+
+/* Unified company logo image styles (used for header and upload previews) */
+.company-logo,
+.logo-preview-large,
+.logo-square {
+  object-position: center;
+  display: block;
+  padding: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
+  background: transparent;
+  border: none;
+}
+
+.fit-cover {
+  object-fit: cover;
+}
+.fit-contain {
+  object-fit: contain;
+}
+
+/* Logo preview sizing (kept from earlier) */
+.logo-preview {
+  width: 88px;
+  height: 44px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+/* Elements marked .no-export are hidden in exported PDFs and print */
+.no-export {
+  display: inline-block;
+}
+
+@media print {
+  /* Page defaults */
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 11pt !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Hide interactive controls */
+  .no-export {
+    display: none !important;
+  }
+
+  /* Keep payslip styling same as on-screen preview */
+  .payslip {
+    margin: 0 !important;
+  }
+
+  /* Remove shadows and backgrounds but keep borders for structure */
+  .payslip,
+  .summary-card,
+  .ed-card,
+  .payslip .logo-square,
+  .payslip .month-block,
+  .payslip .payslip-actions,
+  .payslip .net-bar {
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+
+  /* Keep borders visible for printing */
+  .payslip,
+  .summary-card,
+  .ed-card,
+  .payslip .month-block {
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  }
+
+  /* Prevent cards from breaking across pages */
+  .payslip,
+  .summary-card,
+  .ed-card,
+  .earnings-deductions {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Ensure clear, readable text colors */
+  .payslip .company-name,
+  .payslip .label,
+  .payslip .value,
+  .payslip .net-amount,
+  .payslip .ed-row .amount,
+  .payslip .muted-zero,
+  .payslip .amount-words,
+  .payslip .footer-note {
+    color: #000 !important;
+  }
+
+  /* Make footer separators visible in print */
+  .payslip .footer-note::before,
+  .payslip .footer-note::after {
+    background: rgba(0, 0, 0, 0.06) !important;
+  }
+
+  /* muted-zero should print as readable (no tinting) */
+  .payslip .muted-zero {
+    color: #000 !important;
+    opacity: 0.9 !important;
+  }
+
+  /* Remove background tints from specific widgets and simplify pill */
+  .payslip .summary-left,
+  .payslip .summary-right,
+  .payslip .net-bar,
+  .payslip .ed-header,
+  .payslip .ed-card,
+  .payslip .ed-row,
+  .payslip .ed-body,
+  .payslip .ed-foot {
+    background: transparent !important;
+  }
+  .payslip .net-bar .payable {
+    background: none !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    padding: 6px 10px !important;
+    border-radius: 4px !important;
+  }
+
+  /* Buttons / links should print as plain text with borders */
+  .btn {
+    background: none !important;
+    color: #000 !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: none !important;
+  }
+
+  /* Layout adjustments for print */
+  .payslip {
+    margin: 0;
+    max-width: 100% !important;
+    padding: 12px !important;
+  }
+
+  /* Dashed rule for amount-in-words should appear in print */
+  .payslip .amount-words {
+    border-top: 1px dashed rgba(0, 0, 0, 0.06) !important;
+  }
+}
+
+/* Responsive: stack summary on small screens */
+@media (max-width: 700px) {
+  .payslip .payslip-header {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    align-items: start;
+  }
+  .payslip .month-block {
+    justify-self: start;
+  }
+
+  .payslip .summary-row {
+    flex-direction: column;
+  }
+  .payslip .summary-right {
+    width: 100%;
+    min-width: auto;
+    margin-top: 12px;
+    transform: none;
+  }
+  .payslip .summary-right .meta-group {
+    transform: none;
+    padding-left: 0;
+  }
+  .payslip .summary-right .small,
+  .payslip .summary-right .net-amount {
+    transform: none;
+    padding-left: 0;
+  }
+  .payslip .summary-right .meta-row div:last-child {
+    transform: none;
+  }
+  .payslip {
+    padding: 18px;
+  }
+}
+
+/* PayslipHeader centered variant */
+.payslip-header-center {
+  text-align: center;
+  margin: 12px 0 18px;
+}
+.payslip-header-center__name {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0;
+  color: var(--text);
+}
+.payslip-header-center__address {
+  margin: 6px 0 10px;
+  font-size: 13px;
+  color: var(--text-light);
+}
+.payslip-header-center__rule {
+  border: 0;
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+}
+
+.modal-content p {
+  margin-bottom: 20px;
+}
+
+.modal-content button {
+  margin: 0 10px;
+}
