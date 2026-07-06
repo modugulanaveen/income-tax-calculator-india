@@ -538,6 +538,27 @@ export default function ExcelUpload({ employees = [], setEmployees, company }) {
     return matchingKey ? row[matchingKey] : "";
   };
 
+  const getInfoValue = (categories, aliases = []) => {
+    if (!categories?.info) return "";
+
+    const normalizedInfo = Object.entries(categories.info).reduce(
+      (acc, [key, value]) => {
+        acc[normalizeHeaderKey(key)] = value;
+        return acc;
+      },
+      {},
+    );
+
+    for (const alias of aliases) {
+      const normalizedAlias = normalizeHeaderKey(alias);
+      if (normalizedAlias && normalizedInfo[normalizedAlias] !== undefined) {
+        return normalizedInfo[normalizedAlias];
+      }
+    }
+
+    return "";
+  };
+
   const processCSVColumns = (headers, row, overrides = {}) => {
     const categories = {
       info: {},
@@ -912,11 +933,18 @@ export default function ExcelUpload({ employees = [], setEmployees, company }) {
       `EMP${String(employees.length + index + 1).padStart(4, "0")}`;
 
     // Get UAN (Universal Account Number)
-    const uan =
-      categories.info["uan"] ||
-      categories.info["uancertificate"] ||
-      categories.info["universal account number"] ||
-      "";
+    const uan = getInfoValue(categories, [
+      "uan",
+      "uan number",
+      "uan no",
+      "uan no.",
+      "uannumber",
+      "uanno",
+      "uancertificate",
+      "universal account number",
+      "employee uan",
+      "employee uan number",
+    ]);
 
     // Get paid days and LOP days - check multiple variations
     const paidDays = parseFloat(

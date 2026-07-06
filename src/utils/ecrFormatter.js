@@ -1,9 +1,9 @@
 import { PF_CONSTANTS } from "../constants/pfConstants";
 
 /**
- * Format PF data to EPFO-compliant ECR line (10-field format)
- * Format: UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS
- * This is the actual EPFO format - only 10 fields
+ * Format PF data to EPFO-compliant ECR line (11-field format)
+ * Format: UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS#~#REFUND
+ * This output includes NCP_DAYS before REFUND as required by the current ECR format.
  */
 export function formatToECRLine(pfRecord) {
   const {
@@ -18,6 +18,7 @@ export function formatToECRLine(pfRecord) {
     eps = 0,
     epfEr = 0,
     ncpDays = 0,
+    refundAdvances = 0,
   } = pfRecord;
 
   const grossSalary = gross || grossWages;
@@ -33,6 +34,7 @@ export function formatToECRLine(pfRecord) {
     formatECRNumber(eps),
     formatECRNumber(epfEr),
     formatECRNumber(ncpDays),
+    formatECRNumber(refundAdvances),
   ].join(PF_CONSTANTS.ECR_SEPARATOR);
 }
 
@@ -110,9 +112,10 @@ export function parseECRLine(ecrLine) {
     };
   }
 
+  const hasRefundField = parts.length >= 11;
   return {
     uan: parts[0].trim(),
-    name: parts[1].trim(),
+    name: parts[1].trim().toUpperCase(),
     grossWages: parseFloat(parts[2]) || 0,
     epfWages: parseFloat(parts[3]) || 0,
     epsWages: parseFloat(parts[4]) || 0,
@@ -121,10 +124,10 @@ export function parseECRLine(ecrLine) {
     eps: parseFloat(parts[7]) || 0,
     epfEr: parseFloat(parts[8]) || 0,
     ncpDays: parseInt(parts[9]) || 0,
+    refundAdvances: hasRefundField ? parseFloat(parts[10]) || 0 : 0,
     edli: 0,
     adminCharge: 0,
     edliAdminCharge: 0,
-    refundAdvances: 0,
   };
 }
 

@@ -319,6 +319,7 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
         eps: parseFloat(record.eps) || 0,
         epfEr: parseFloat(record.epfEr) || 0,
         ncpDays: parseInt(record.ncpDays) || 0,
+        refundAdvances: parseFloat(record.refundAdvances) || 0,
       }));
 
       const invalidRecords = normalizedRecords.filter(
@@ -330,7 +331,7 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
 
       if (invalidRecords.length > 0) {
         setErrors([
-          "One or more pasted ECR records have gross wages lower than contribution wages. Please verify the input order: UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS",
+          "One or more pasted ECR records have gross wages lower than contribution wages. Please verify the input order: UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS#~#REFUND",
         ]);
         return;
       }
@@ -458,7 +459,7 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
         <body>
           <div class="header">
             <h3>EPFO ECR File Preview (${pfData.length} records)</h3>
-            <p>Format: UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS</p>
+            <p>Format: UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS#~#REFUND</p>
           </div>
           <div>${content.replace(/\n/g, "<br>")}</div>
         </body>
@@ -498,7 +499,7 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
         </h1>
         <p style={{ color: "var(--text-light)", fontSize: "14px" }}>
           Generate EPFO-compliant ECR files (Format:
-          UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS)
+          UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS#~#REFUND)
         </p>
       </div>
 
@@ -538,9 +539,9 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
       >
         <span style={{ fontSize: "18px" }}>ℹ️</span>
         <div>
-          <strong>EPFO ECR Format:</strong> Generates 10-field format:{" "}
+          <strong>EPFO ECR Format:</strong> Generates 11-field format:{" "}
           <code>
-            UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS
+            UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS#~#REFUND
           </code>
         </div>
       </div>
@@ -676,10 +677,10 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
                   }}
                 >
                   <p>
-                    <strong>ECR Format (10 fields):</strong>
+                    <strong>ECR Format (11 fields):</strong>
                   </p>
                   <code style={{ fontSize: "11px", wordBreak: "break-all" }}>
-                    UAN#~#NAME#~#GROSS#~#PF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP
+                    UAN#~#NAME#~#GROSS#~#PF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS#~#REFUND
                   </code>
                 </div>
               </div>
@@ -1227,8 +1228,8 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
               <textarea
                 value={ecrLine}
                 onChange={(e) => setEcrLine(e.target.value)}
-                placeholder="#~#101608407892#~#LAKSHMI BHAVANI CHIPPA#~#23800#~#10000#~#10000#~#10000#~#1200#~#833#~#367#~#0"
-                title="Order: UAN, NAME, GROSS_WAGES, EPF_WAGES, EPS_WAGES, EDLI_WAGES, EPF_EE, EPS, EPF_ER, NCP_DAYS"
+                placeholder="#~#101608407892#~#NAVEEN MODUGULA#~#23800#~#10000#~#10000#~#10000#~#1200#~#833#~#367#~#0#~#0"
+                title="Order: UAN, NAME, GROSS_WAGES, EPF_WAGES, EPS_WAGES, EDLI_WAGES, EPF_EE, EPS, EPF_ER, NCP_DAYS, REFUND"
                 style={{
                   width: "100%",
                   minHeight: "100px",
@@ -1243,7 +1244,7 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
                 style={{ color: "#64748b", display: "block", marginTop: "8px" }}
               >
                 Field order:
-                UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS
+                UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS#~#REFUND
               </small>
               <button
                 type="button"
@@ -1325,6 +1326,7 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
                     <th>EPF ER</th>
                     <th>EDLI</th>
                     <th>NCP Days</th>
+                    <th>Refund</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -1340,6 +1342,7 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
                       <td>{formatINR(record.epfEr)}</td>
                       <td>{formatINR(record.edli)}</td>
                       <td>{record.ncpDays}</td>
+                      <td>{formatINR(record.refundAdvances || 0)}</td>
                       <td>
                         <button
                           type="button"
@@ -1477,6 +1480,47 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
             </div>
           </div>
 
+          <div style={{ marginTop: "24px" }}>
+            <label
+              style={{
+                display: "block",
+                marginBottom: "8px",
+                fontWeight: 600,
+              }}
+            >
+              Paste ECR line(s):
+            </label>
+            <textarea
+              value={ecrLine}
+              onChange={(e) => setEcrLine(e.target.value)}
+              placeholder="#~#101608407892#~#NAVEEN MODUGULA#~#23800#~#10000#~#10000#~#10000#~#1200#~#833#~#367#~#0#~#0"
+              title="Order: UAN, NAME, GROSS_WAGES, EPF_WAGES, EPS_WAGES, EDLI_WAGES, EPF_EE, EPS, EPF_ER, NCP_DAYS, REFUND"
+              style={{
+                width: "100%",
+                minHeight: "100px",
+                padding: "10px",
+                borderRadius: "8px",
+                border: "1px solid #cbd5e1",
+                fontFamily: "monospace",
+                resize: "vertical",
+              }}
+            />
+            <small
+              style={{ color: "#64748b", display: "block", marginTop: "8px" }}
+            >
+              Field order:
+              UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS#~#REFUND
+            </small>
+            <button
+              type="button"
+              className="epf-btn epf-btn-primary"
+              onClick={handleParseECRLine}
+              style={{ marginTop: "12px" }}
+            >
+              <Upload size={16} /> Import ECR Line
+            </button>
+          </div>
+
           {pfData.length === 0 && (
             <div className="epf-alert epf-alert-info">
               <div className="epf-alert-icon">ℹ️</div>
@@ -1506,7 +1550,7 @@ export default function EPFECRGenerator({ company = {}, employees = [] }) {
                 >
                   ECR format:{" "}
                   <code>
-                    UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS
+                    UAN#~#NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EPF_EE#~#EPS#~#EPF_ER#~#NCP_DAYS#~#REFUND
                   </code>
                 </div>
               </div>
