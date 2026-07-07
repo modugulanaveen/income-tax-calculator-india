@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./components/Dashboard";
@@ -8,6 +7,7 @@ import PayslipPreview from "./components/PayslipPreview";
 import ExcelUpload from "./components/ExcelUpload";
 import Settings from "./components/Settings";
 import EPFECRGenerator from "./components/EPFECRGenerator";
+import { loadPayrollData, savePayrollData } from "./services/payrollStorage";
 
 const initialCompany = {
   companyName: "Your Company Name",
@@ -19,26 +19,27 @@ const initialCompany = {
   website: "",
   panNumber: "ABCDE1234F",
   tanNumber: "BLRA12345F",
-  logoDataUrl: null
+  logoDataUrl: null,
 };
 
 export default function App() {
   const [page, setPage] = useState("dashboard");
   const [employees, setEmployees] = useState([]);
   const [company, setCompany] = useState(initialCompany);
+  const [hasHydrated, setHasHydrated] = useState(false);
+  const [saveStatus, setSaveStatus] = useState("Loading payroll data...");
 
-  // Load from localStorage
   useEffect(() => {
-    const savedData = localStorage.getItem("payrollData");
-    if (savedData) {
-      try {
-        const data = JSON.parse(savedData);
-        setEmployees(data.employees || []);
-        setCompany(data.company || initialCompany);
-      } catch (error) {
-        console.warn("Failed to parse saved payrollData from localStorage.", error);
-      }
-    }
+    const hydrate = async () => {
+      setSaveStatus("Loading payroll data...");
+      const data = await loadPayrollData();
+      setEmployees(data.employees || []);
+      setCompany(data.company || initialCompany);
+      setHasHydrated(true);
+      setSaveStatus("Payroll data loaded");
+    };
+
+    hydrate();
   }, []);
 
   // Handle hash-based routing
@@ -54,29 +55,41 @@ export default function App() {
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, []);
 
-  // Save to localStorage
   useEffect(() => {
+    if (!hasHydrated) return;
+
     const data = { employees, company };
-    try {
-      const json = JSON.stringify(data);
-      localStorage.setItem("payrollData", json);
-    } catch (error) {
-      if (error instanceof DOMException && (error.name === "QuotaExceededError" || error.name === "NS_ERROR_DOM_QUOTA_REACHED")) {
-        console.warn("Unable to save payrollData to localStorage: quota exceeded.", error);
-      } else {
-        console.error("Unable to save payrollData to localStorage:", error);
-      }
-    }
-  }, [employees, company]);
+    const timer = window.setTimeout(async () => {
+      setSaveStatus("Saving payroll data...");
+      const result = await savePayrollData(data);
+      setSaveStatus(
+        result.source === "supabase"
+          ? "Saved to shared storage"
+          : "Saved locally",
+      );
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [employees, company, hasHydrated]);
 
   return (
     <div className={`app-container`}>
-      <Sidebar 
-        setPage={setPage} 
-        page={page} 
-      />
-      
+      <Sidebar setPage={setPage} page={page} />
+
       <div className="main-content">
+        <div
+          style={{
+            padding: "0.75rem 1rem",
+            marginBottom: "1rem",
+            borderRadius: "0.75rem",
+            background: "#f9fafb",
+            border: "1px solid #e5e7eb",
+            color: "#374151",
+          }}
+        >
+          {saveStatus}
+        </div>
+
         {page === "dashboard" && (
           <Dashboard employees={employees} company={company} />
         )}
@@ -84,13 +97,22 @@ export default function App() {
           <Employees employees={employees} setEmployees={setEmployees} />
         )}
         {page === "addEmployee" && (
-          <AddEmployee employees={employees} setEmployees={setEmployees} setPage={setPage} setCompany={setCompany} />
+          <AddEmployee
+            employees={employees}
+            setEmployees={setEmployees}
+            setPage={setPage}
+            setCompany={setCompany}
+          />
         )}
         {page === "payslips" && (
           <PayslipPreview employees={employees} company={company} />
         )}
         {page === "upload" && (
-          <ExcelUpload employees={employees} setEmployees={setEmployees} company={company} />
+          <ExcelUpload
+            employees={employees}
+            setEmployees={setEmployees}
+            company={company}
+          />
         )}
         {page === "epf-ecr" && (
           <EPFECRGenerator company={company} employees={employees} />

@@ -1,6 +1,19 @@
-
 import React, { useState, useEffect } from "react";
-import { Save, Upload, Building, MapPin, Globe, Phone, Mail, AlertCircle } from "lucide-react";
+import {
+  Save,
+  Upload,
+  Building,
+  MapPin,
+  Globe,
+  Phone,
+  Mail,
+  AlertCircle,
+} from "lucide-react";
+import {
+  getStorageStatus,
+  loadPayrollData,
+  savePayrollData,
+} from "../services/payrollStorage";
 
 export default function Settings({ company, setCompany }) {
   const [formData, setFormData] = useState({
@@ -13,11 +26,12 @@ export default function Settings({ company, setCompany }) {
     website: company.website || "",
     panNumber: company.panNumber || "",
     tanNumber: company.tanNumber || "",
-    logoDataUrl: company.logoDataUrl || ""
+    logoDataUrl: company.logoDataUrl || "",
   });
 
   const [logoPreview, setLogoPreview] = useState(company.logoDataUrl || null);
   const [saved, setSaved] = useState(false);
+  const [storageStatus, setStorageStatus] = useState(getStorageStatus());
 
   // Sync form data when company prop changes
   useEffect(() => {
@@ -31,7 +45,7 @@ export default function Settings({ company, setCompany }) {
       website: company.website || "",
       panNumber: company.panNumber || "",
       tanNumber: company.tanNumber || "",
-      logoDataUrl: company.logoDataUrl || ""
+      logoDataUrl: company.logoDataUrl || "",
     });
     setLogoPreview(company.logoDataUrl || null);
   }, [company]);
@@ -55,16 +69,15 @@ export default function Settings({ company, setCompany }) {
     const reader = new FileReader();
     reader.onload = (ev) => {
       setLogoPreview(ev.target.result);
-      setFormData(prev => ({ ...prev, logoDataUrl: ev.target.result }));
+      setFormData((prev) => ({ ...prev, logoDataUrl: ev.target.result }));
     };
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Update company settings
-    setCompany({
+
+    const updatedCompany = {
       companyName: formData.companyName,
       address: formData.address,
       cityPincode: formData.cityPincode,
@@ -74,25 +87,18 @@ export default function Settings({ company, setCompany }) {
       website: formData.website,
       panNumber: formData.panNumber,
       tanNumber: formData.tanNumber,
-      logoDataUrl: formData.logoDataUrl
+      logoDataUrl: formData.logoDataUrl,
+    };
+
+    setCompany(updatedCompany);
+
+    const existingData = await loadPayrollData();
+    await savePayrollData({
+      employees: existingData.employees || [],
+      company: updatedCompany,
     });
 
-    // Save to localStorage
-    const payrollData = JSON.parse(localStorage.getItem("payrollData") || "{}");
-    payrollData.company = {
-      companyName: formData.companyName,
-      address: formData.address,
-      cityPincode: formData.cityPincode,
-      country: formData.country,
-      email: formData.email,
-      phone: formData.phone,
-      website: formData.website,
-      panNumber: formData.panNumber,
-      tanNumber: formData.tanNumber,
-      logoDataUrl: formData.logoDataUrl
-    };
-    localStorage.setItem("payrollData", JSON.stringify(payrollData));
-
+    setStorageStatus(getStorageStatus());
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
@@ -108,7 +114,7 @@ export default function Settings({ company, setCompany }) {
       website: "",
       panNumber: "",
       tanNumber: "",
-      logoDataUrl: ""
+      logoDataUrl: "",
     });
     setLogoPreview(null);
   };
@@ -129,6 +135,21 @@ export default function Settings({ company, setCompany }) {
         </div>
       )}
 
+      <div
+        style={{
+          marginBottom: "1rem",
+          padding: "0.9rem 1rem",
+          border: "1px solid #e5e7eb",
+          borderRadius: "0.75rem",
+          background: "#f9fafb",
+        }}
+      >
+        <strong>Storage mode</strong>
+        <div style={{ marginTop: "0.25rem", color: "#4b5563" }}>
+          {storageStatus.message}
+        </div>
+      </div>
+
       <form onSubmit={handleSubmit} className="settings-form">
         <div className="settings-grid">
           {/* Left Column - Logo & Basic Info */}
@@ -142,7 +163,11 @@ export default function Settings({ company, setCompany }) {
               <div className="logo-upload-section">
                 <div className="logo-preview-container">
                   {logoPreview ? (
-                    <img src={logoPreview} alt="Company Logo" className="logo-preview-large" />
+                    <img
+                      src={logoPreview}
+                      alt="Company Logo"
+                      className="logo-preview-large"
+                    />
                   ) : (
                     <div className="logo-placeholder">
                       <Building size={48} />
@@ -157,7 +182,7 @@ export default function Settings({ company, setCompany }) {
                     id="logo-upload"
                     accept="image/*"
                     onChange={handleLogoUpload}
-                    style={{ display: 'none' }}
+                    style={{ display: "none" }}
                   />
                   <label htmlFor="logo-upload" className="btn btn-secondary">
                     <Upload size={16} />
@@ -169,7 +194,7 @@ export default function Settings({ company, setCompany }) {
                       className="btn btn-text"
                       onClick={() => {
                         setLogoPreview(null);
-                        setFormData(prev => ({ ...prev, logoDataUrl: "" }));
+                        setFormData((prev) => ({ ...prev, logoDataUrl: "" }));
                       }}
                     >
                       Remove
@@ -191,7 +216,9 @@ export default function Settings({ company, setCompany }) {
                   type="text"
                   id="companyName"
                   value={formData.companyName}
-                  onChange={(e) => setFormData({...formData, companyName: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, companyName: e.target.value })
+                  }
                   placeholder="Enter company name"
                   required
                 />
@@ -205,7 +232,9 @@ export default function Settings({ company, setCompany }) {
                 <textarea
                   id="address"
                   value={formData.address}
-                  onChange={(e) => setFormData({...formData, address: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, address: e.target.value })
+                  }
                   placeholder="Full company address"
                   rows="3"
                 />
@@ -218,7 +247,9 @@ export default function Settings({ company, setCompany }) {
                     type="text"
                     id="cityPincode"
                     value={formData.cityPincode}
-                    onChange={(e) => setFormData({...formData, cityPincode: e.target.value})}
+                    onChange={(e) =>
+                      setFormData({ ...formData, cityPincode: e.target.value })
+                    }
                     placeholder="e.g., Mumbai, 400001"
                   />
                 </div>
@@ -228,7 +259,9 @@ export default function Settings({ company, setCompany }) {
                   <select
                     id="country"
                     value={formData.country}
-                    onChange={(e) => setFormData({...formData, country: e.target.value})}
+                    onChange={(e) =>
+                      setFormData({ ...formData, country: e.target.value })
+                    }
                   >
                     <option value="India">India</option>
                     <option value="USA">United States</option>
@@ -260,7 +293,9 @@ export default function Settings({ company, setCompany }) {
                     type="email"
                     id="email"
                     value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
                     placeholder="company@example.com"
                   />
                 </div>
@@ -274,7 +309,9 @@ export default function Settings({ company, setCompany }) {
                     type="tel"
                     id="phone"
                     value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone: e.target.value })
+                    }
                     placeholder="+91 9876543210"
                   />
                 </div>
@@ -289,7 +326,9 @@ export default function Settings({ company, setCompany }) {
                   type="url"
                   id="website"
                   value={formData.website}
-                  onChange={(e) => setFormData({...formData, website: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, website: e.target.value })
+                  }
                   placeholder="https://www.company.com"
                 />
               </div>
@@ -308,7 +347,12 @@ export default function Settings({ company, setCompany }) {
                     type="text"
                     id="panNumber"
                     value={formData.panNumber}
-                    onChange={(e) => setFormData({...formData, panNumber: e.target.value.toUpperCase()})}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        panNumber: e.target.value.toUpperCase(),
+                      })
+                    }
                     placeholder="ABCDE1234F"
                     maxLength="10"
                   />
@@ -320,7 +364,12 @@ export default function Settings({ company, setCompany }) {
                     type="text"
                     id="tanNumber"
                     value={formData.tanNumber}
-                    onChange={(e) => setFormData({...formData, tanNumber: e.target.value.toUpperCase()})}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        tanNumber: e.target.value.toUpperCase(),
+                      })
+                    }
                     placeholder="BLRA12345F"
                   />
                 </div>
@@ -333,11 +382,21 @@ export default function Settings({ company, setCompany }) {
                 <h3>How Settings Work</h3>
               </div>
               <div className="info-box">
-                <p><strong>Automatic Data Combination:</strong></p>
+                <p>
+                  <strong>Automatic Data Combination:</strong>
+                </p>
                 <ul>
-                  <li>These company details will automatically appear on all payslips</li>
-                  <li>When importing Excel, company details will be merged with employee data</li>
-                  <li>Excel company data will override these settings if provided</li>
+                  <li>
+                    These company details will automatically appear on all
+                    payslips
+                  </li>
+                  <li>
+                    When importing Excel, company details will be merged with
+                    employee data
+                  </li>
+                  <li>
+                    Excel company data will override these settings if provided
+                  </li>
                   <li>Logo will appear on all generated payslips</li>
                 </ul>
               </div>
@@ -350,7 +409,11 @@ export default function Settings({ company, setCompany }) {
             <Save size={16} />
             Save Settings
           </button>
-          <button type="button" className="btn btn-secondary" onClick={handleReset}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={handleReset}
+          >
             Reset Form
           </button>
         </div>
