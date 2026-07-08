@@ -83,7 +83,9 @@ const main = async () => {
       process.exit(3);
     }
   } catch (err) {
-    console.error("Request failed:", err.message || err);
+    console.error("FULL ERROR:");
+    console.error(err);
+    console.error("CAUSE:", err.cause);
     process.exit(4);
   }
 };
